@@ -29,8 +29,9 @@ const App = () => {
         
         setRawData(csvData);
         setChildRelations(relations);
-        const topPairs = getTopPredictedPairs(csvData, 10);
-        setDisplayedPairs(topPairs);
+        // 전체 데이터 표시 (개수 제한 없음)
+        const allPairs = getTopPredictedPairs(csvData, csvData.length);
+        setDisplayedPairs(allPairs);
         setIsLoading(false);
       } catch (err) {
         console.error('Error loading data:', err);
@@ -49,7 +50,7 @@ const App = () => {
 
   const communityRanking = useMemo(() => {
     if (!rawData.length) return [];
-    return getCommunityPairRanking(rawData, 10);
+    return getCommunityPairRanking(rawData, Infinity);
   }, [rawData]);
 
   const handleToggleExpand = (pair) => {
@@ -63,22 +64,25 @@ const App = () => {
   };
 
   const handleCommunityPairClick = (community1, community2) => {
-    const filtered = filterByCommunityPairClick(rawData, community1, community2, 20);
+    // 필터링된 전체 데이터 표시 (개수 제한 없음)
+    const filtered = filterByCommunityPairClick(rawData, community1, community2, Infinity);
     setDisplayedPairs(filtered);
     setSelectedCommunities([community1, community2]);
     setHighlightedNodes([community1, community2]);
   };
 
   const handleNodeClick = (communityId) => {
-    const filtered = filterByCommunity(rawData, communityId, 20);
+    // 필터링된 전체 데이터 표시 (개수 제한 없음)
+    const filtered = filterByCommunity(rawData, communityId, Infinity);
     setDisplayedPairs(filtered);
     setSelectedCommunities([communityId]);
     setHighlightedNodes([communityId]);
   };
 
   const handleReset = () => {
-    const topPairs = getTopPredictedPairs(rawData, 10);
-    setDisplayedPairs(topPairs);
+    // 전체 데이터로 복원 (개수 제한 없음)
+    const allPairs = getTopPredictedPairs(rawData, rawData.length);
+    setDisplayedPairs(allPairs);
     setSelectedCommunities([]);
     setHighlightedNodes([]);
     setExpandedPairs(new Set());
@@ -173,7 +177,7 @@ const App = () => {
         padding: '15px',
         overflow: 'hidden'
       }}>
-        <div style={{ width: '45%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ width: '40%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={{
             background: 'white',
             borderRadius: '8px',
@@ -199,7 +203,7 @@ const App = () => {
           />
         </div>
 
-        <div style={{ width: '55%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <div style={{ width: '60%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <div style={{
             flex: 2,
             background: 'white',

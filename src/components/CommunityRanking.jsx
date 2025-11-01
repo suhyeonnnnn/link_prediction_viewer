@@ -2,20 +2,16 @@ import React from 'react';
 
 const CommunityRanking = ({ ranking, selectedCommunities, onItemClick, onReset }) => {
   return (
-    <div style={{
-      flex: 1,
-      background: 'white',
-      borderRadius: '8px',
-      padding: '15px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <>
+      {/* 헤더 - 고정 */}
       <div style={{
+        background: 'white',
+        borderRadius: '8px',
+        padding: '15px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '10px'
+        alignItems: 'center'
       }}>
         <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
           Community Pair Ranking
@@ -39,8 +35,17 @@ const CommunityRanking = ({ ranking, selectedCommunities, onItemClick, onReset }
           Reset
         </button>
       </div>
-      
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+
+      {/* 리스트 - 스크롤 가능 */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        background: 'white',
+        borderRadius: '8px',
+        padding: '10px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        marginTop: '10px'
+      }}>
         {ranking.map(item => {
           const isSelected = selectedCommunities.includes(item.community1) && 
                            selectedCommunities.includes(item.community2);
@@ -75,7 +80,7 @@ const CommunityRanking = ({ ranking, selectedCommunities, onItemClick, onReset }
           );
         })}
       </div>
-    </div>
+    </>
   );
 };
 
