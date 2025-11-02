@@ -164,7 +164,7 @@ const App = () => {
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <span>Concept Network Dashboard</span>
+        <span>Service Research Forecast</span>
         <div style={{ fontSize: '14px', fontWeight: 'normal', opacity: 0.8 }}>
           Total Pairs: {rawData.length} | Communities: {networkData.nodes.length}
         </div>
@@ -215,7 +215,7 @@ const App = () => {
             flexDirection: 'column'
           }}>
             <h2 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#2c3e50' }}>
-              Concept Communities
+              Concept Communities Network
             </h2>
             <NetworkGraph
               data={networkData}
