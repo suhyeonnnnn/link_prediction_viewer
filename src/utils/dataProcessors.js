@@ -62,7 +62,7 @@ export const getCommunityPairRanking = (data, topN = 10) => {
         pair.pred_score > max.pred_score ? pair : max, stats.pairs[0]
       )
     }))
-    .sort((a, b) => b.connection_strength - a.connection_strength)
+    .sort((a, b) => b.pair_count - a.pair_count)
     .slice(0, topN)
     .map((item, index) => ({ ...item, rank: index + 1 }));
   

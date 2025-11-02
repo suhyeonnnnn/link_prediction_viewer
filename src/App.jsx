@@ -53,7 +53,7 @@ const App = () => {
     return getCommunityPairRanking(rawData, Infinity);
   }, [rawData]);
 
-  const handleToggleExpand = (pair) => {
+  const handleToggleExpand = React.useCallback((pair) => {
     const newExpanded = new Set(expandedPairs);
     if (newExpanded.has(pair.rank)) {
       newExpanded.delete(pair.rank);
@@ -61,7 +61,7 @@ const App = () => {
       newExpanded.add(pair.rank);
     }
     setExpandedPairs(newExpanded);
-  };
+  }, [expandedPairs]);
 
   const handleCommunityPairClick = (community1, community2) => {
     // 필터링된 전체 데이터 표시 (개수 제한 없음)
@@ -175,9 +175,10 @@ const App = () => {
         display: 'flex',
         gap: '15px',
         padding: '15px',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        alignItems: 'flex-start'
       }}>
-        <div style={{ width: '40%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ width: '50%', display: 'flex', flexDirection: 'column', gap: '10px', height: '100%' }}>
           <div style={{
             background: 'white',
             borderRadius: '8px',
@@ -203,7 +204,7 @@ const App = () => {
           />
         </div>
 
-        <div style={{ width: '60%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <div style={{ width: '50%', display: 'flex', flexDirection: 'column', gap: '15px', height: '100%' }}>
           <div style={{
             flex: 2,
             background: 'white',

@@ -30,67 +30,147 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick }) => {
       .domain(data.nodes.map(n => n.id))
       .range(d3.schemeCategory10);
 
-    const simulation = d3.forceSimulation(data.nodes)
-      .force('link', d3.forceLink(data.links).id(d => d.id).distance(120))
-      .force('charge', d3.forceManyBody().strength(-400))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(50));
+    // 노드 필터링: 하위 5개 제거
+    const sortedNodes = [...data.nodes].sort((a, b) => b.size - a.size);
+    const nodesToRemove = sortedNodes.slice(-5).map(n => n.id);
+    const filteredNodes = data.nodes.filter(n => !nodesToRemove.includes(n.id));
+    const filteredLinks = data.links.filter(l => 
+      !nodesToRemove.includes(l.source.id || l.source) && 
+      !nodesToRemove.includes(l.target.id || l.target)
+    );
 
+    // Link weight 분석
+    const weights = filteredLinks.map(l => l.weight);
+    const maxWeight = Math.max(...weights);
+    const minWeight = Math.min(...weights);
+    const weightThreshold = minWeight + (maxWeight - minWeight) * 0.3;  // 하위 30%는 약한 링크
+
+    // Force simulation with adjusted parameters
+    const simulation = d3.forceSimulation(filteredNodes)
+      .force('link', d3.forceLink(filteredLinks).id(d => d.id).distance(150))
+      .force('charge', d3.forceManyBody().strength(-600))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide().radius(40));
+
+    // Links - 강도에 따라 차별화
     const link = g.append('g')
       .selectAll('line')
-      .data(data.links)
+      .data(filteredLinks)
       .join('line')
-      .attr('stroke', '#999')
-      .attr('stroke-opacity', 0.6)
-      .attr('stroke-width', d => Math.sqrt(d.weight) * 2);
+      .attr('stroke', d => {
+        // 강한 링크는 진한 색, 약한 링크는 연한 색
+        if (d.weight >= weightThreshold) {
+          return '#555';  // 진한 회색
+        } else {
+          return '#ddd';  // 연한 회색
+        }
+      })
+      .attr('stroke-opacity', d => {
+        // 강도에 따라 투명도 조절
+        if (d.weight >= weightThreshold) {
+          // 강한 링크: 0.4 ~ 0.8
+          const normalized = (d.weight - weightThreshold) / (maxWeight - weightThreshold);
+          return 0.4 + normalized * 0.4;
+        } else {
+          // 약한 링크: 매우 연하게
+          return 0.1;
+        }
+      })
+      .attr('stroke-width', d => {
+        // 강한 링크만 두껍게
+        if (d.weight >= weightThreshold) {
+          return Math.min(Math.sqrt(d.weight) * 1.5, 4);
+        } else {
+          return 1;
+        }
+      });
 
     const node = g.append('g')
       .selectAll('g')
-      .data(data.nodes)
+      .data(filteredNodes)
       .join('g')
       .call(d3.drag()
         .on('start', dragstarted)
         .on('drag', dragged)
         .on('end', dragended));
 
+    // Nodes - 크기 축소
     node.append('circle')
-      .attr('r', d => 12 + Math.sqrt(d.size) * 3)
+      .attr('r', d => Math.min(8 + Math.sqrt(d.size) * 1.5, 30))
       .attr('fill', d => highlightedNodes.includes(d.id) ? '#27ae60' : colorScale(d.id))
       .attr('stroke', d => highlightedNodes.includes(d.id) ? '#1e8449' : '#fff')
-      .attr('stroke-width', d => highlightedNodes.includes(d.id) ? 4 : 2.5)
+      .attr('stroke-width', d => highlightedNodes.includes(d.id) ? 3 : 2)
       .style('cursor', 'pointer')
       .on('click', (event, d) => {
         event.stopPropagation();
         onNodeClick(d.id);
       })
-      .on('mouseover', function() {
-        d3.select(this).attr('stroke-width', 4);
+      .on('mouseover', function(event, d) {
+        d3.select(this)
+          .attr('stroke-width', 4)
+          .attr('r', Math.min(8 + Math.sqrt(d.size) * 1.5, 30) * 1.2);
       })
       .on('mouseout', function(event, d) {
-        d3.select(this).attr('stroke-width', highlightedNodes.includes(d.id) ? 4 : 2.5);
+        d3.select(this)
+          .attr('stroke-width', highlightedNodes.includes(d.id) ? 3 : 2)
+          .attr('r', Math.min(8 + Math.sqrt(d.size) * 1.5, 30));
       });
 
+    // Labels - 전체 텍스트 표시, 줄바꿈 처리
     const labelGroup = node.append('g');
     
     const text = labelGroup.append('text')
-      .text(d => d.label.length > 30 ? d.label.slice(0, 30) + '...' : d.label)
-      .attr('font-size', '11px')
       .attr('text-anchor', 'middle')
-      .attr('dy', d => 22 + Math.sqrt(d.size) * 3)
+      .attr('dy', d => Math.min(8 + Math.sqrt(d.size) * 1.5, 30) + 16)
       .attr('fill', '#2c3e50')
-      .attr('font-weight', '500')
+      .attr('font-weight', '600')
       .style('pointer-events', 'none');
 
+    // 긴 텍스트를 여러 줄로 나누기
+    text.each(function(d) {
+      const textElement = d3.select(this);
+      const words = d.label.split(' ');
+      const lineHeight = 1.2;
+      const maxCharsPerLine = 20;
+      
+      let line = [];
+      let lineNumber = 0;
+      let tspan = textElement.append('tspan')
+        .attr('x', 0)
+        .attr('dy', 0)
+        .attr('font-size', '11px');
+      
+      words.forEach((word, i) => {
+        line.push(word);
+        tspan.text(line.join(' '));
+        
+        if (tspan.node().getComputedTextLength() > maxCharsPerLine * 5.5 && line.length > 1) {
+          line.pop();
+          tspan.text(line.join(' '));
+          line = [word];
+          lineNumber++;
+          tspan = textElement.append('tspan')
+            .attr('x', 0)
+            .attr('dy', lineHeight + 'em')
+            .attr('font-size', '11px')
+            .text(word);
+        }
+      });
+    });
+
+    // Label background - 더 연하게
     text.each(function() {
       const bbox = this.getBBox();
       d3.select(this.parentNode).insert('rect', 'text')
-        .attr('x', bbox.x - 2)
-        .attr('y', bbox.y - 1)
-        .attr('width', bbox.width + 4)
-        .attr('height', bbox.height + 2)
+        .attr('x', bbox.x - 4)
+        .attr('y', bbox.y - 2)
+        .attr('width', bbox.width + 8)
+        .attr('height', bbox.height + 4)
         .attr('fill', 'white')
-        .attr('fill-opacity', 0.8)
-        .attr('rx', 2);
+        .attr('fill-opacity', 0.7)  // 0.95 → 0.7 (더 연하게)
+        .attr('rx', 3)
+        .attr('stroke', '#e0e0e0')
+        .attr('stroke-width', 0.5);
     });
 
     simulation.on('tick', () => {
