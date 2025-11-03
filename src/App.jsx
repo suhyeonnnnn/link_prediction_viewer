@@ -10,8 +10,10 @@ import {
 import NetworkGraph from './components/NetworkGraph';
 import ConceptPairsList from './components/ConceptPairsList';
 import CommunityRanking from './components/CommunityRanking';
+import IntroPage from './components/IntroPage';
 
 const App = () => {
+  const [showIntro, setShowIntro] = useState(true);
   const [rawData, setRawData] = useState([]);
   const [childRelations, setChildRelations] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -87,6 +89,11 @@ const App = () => {
     setHighlightedNodes([]);
     setExpandedPairs(new Set());
   };
+
+  // Intro 페이지 표시
+  if (showIntro) {
+    return <IntroPage onEnter={() => setShowIntro(false)} />;
+  }
 
   if (isLoading) {
     return (
@@ -164,7 +171,22 @@ const App = () => {
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <span>Service Research Forecast</span>
+        <span
+          onClick={() => setShowIntro(true)}
+          style={{
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            borderBottom: '2px solid transparent'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.borderBottom = '2px solid white';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.borderBottom = '2px solid transparent';
+          }}
+        >
+          Service Research Forecast
+        </span>
         <div style={{ fontSize: '14px', fontWeight: 'normal', opacity: 0.8 }}>
           Total Pairs: {rawData.length} | Communities: {networkData.nodes.length}
         </div>
