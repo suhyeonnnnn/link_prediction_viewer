@@ -1,6 +1,6 @@
-import React, { memo, useState } from 'react';
+import React, { useState } from 'react';
 
-const ConceptPairItem = memo(({ 
+const ConceptPairItem = ({ 
   pair, 
   isExpanded, 
   onToggleExpand, 
@@ -238,12 +238,6 @@ const ConceptPairItem = memo(({
       )}
     </div>
   );
-}, (prevProps, nextProps) => {
-  // 성능 최적화: isExpanded와 pair.rank가 같으면 리렌더링하지 않음
-  return prevProps.isExpanded === nextProps.isExpanded &&
-         prevProps.pair.rank === nextProps.pair.rank;
-});
-
-ConceptPairItem.displayName = 'ConceptPairItem';
+};
 
 export default ConceptPairItem;

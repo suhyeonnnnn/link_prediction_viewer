@@ -19,9 +19,13 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [displayedPairs, setDisplayedPairs] = useState([]);
-  const [expandedPairs, setExpandedPairs] = useState(new Set());
+  const [expandedPairs, setExpandedPairs] = useState(new Map());
   const [selectedCommunities, setSelectedCommunities] = useState([]);
   const [highlightedNodes, setHighlightedNodes] = useState([]);
+  
+  // 새로운 상태: topN과 weightMode
+  const [topN, setTopN] = useState(1000);
+  const [weightMode, setWeightMode] = useState('count');
 
   useEffect(() => {
     const loadData = async () => {
@@ -31,9 +35,9 @@ const App = () => {
         
         setRawData(csvData);
         setChildRelations(relations);
-        // 전체 데이터 표시 (개수 제한 없음)
-        const allPairs = getTopPredictedPairs(csvData, csvData.length);
-        setDisplayedPairs(allPairs);
+        // topN개만큼만 표시
+        const topPairs = getTopPredictedPairs(csvData, topN);
+        setDisplayedPairs(topPairs);
         setIsLoading(false);
       } catch (err) {
         console.error('Error loading data:', err);
@@ -45,28 +49,60 @@ const App = () => {
     loadData();
   }, []);
 
+  // topN이 변경될 때 displayedPairs 업데이트 (필터링이 없는 경우에만)
+  useEffect(() => {
+    if (selectedCommunities.length === 0 && rawData.length > 0) {
+      const topPairs = getTopPredictedPairs(rawData, topN);
+      setDisplayedPairs(topPairs);
+    }
+  }, [topN, rawData, selectedCommunities]);
+
+  // topN과 weightMode에 따라 filteredData 생성
+  const filteredData = useMemo(() => {
+    if (!rawData.length) return [];
+    return getTopPredictedPairs(rawData, topN);
+  }, [rawData, topN]);
+
   const networkData = useMemo(() => {
-    if (!rawData.length) return { nodes: [], links: [] };
-    return getConceptCommunitiesNetwork(rawData);
-  }, [rawData]);
+    if (!filteredData.length) return { nodes: [], links: [] };
+    // filteredData를 rawData 형식으로 변환
+    const dataForNetwork = filteredData.map(pair => ({
+      c1_community: pair.community1,
+      c2_community: pair.community2,
+      pred: pair.prediction_score
+    }));
+    return getConceptCommunitiesNetwork(dataForNetwork, weightMode);
+  }, [filteredData, weightMode]);
 
   const communityRanking = useMemo(() => {
-    if (!rawData.length) return [];
-    return getCommunityPairRanking(rawData, Infinity);
-  }, [rawData]);
+    if (!filteredData.length) return [];
+    const dataForRanking = filteredData.map(pair => ({
+      c1_community: pair.community1,
+      c2_community: pair.community2,
+      concept1: pair.concept1,
+      concept2: pair.concept2,
+      pred: pair.prediction_score
+    }));
+    return getCommunityPairRanking(dataForRanking, Infinity, weightMode);
+  }, [filteredData, weightMode]);
 
   const handleToggleExpand = React.useCallback((pair) => {
-    const newExpanded = new Set(expandedPairs);
+    const newExpanded = new Map(expandedPairs);
     if (newExpanded.has(pair.rank)) {
       newExpanded.delete(pair.rank);
     } else {
-      newExpanded.add(pair.rank);
+      newExpanded.set(pair.rank, [pair.community1, pair.community2]);
     }
     setExpandedPairs(newExpanded);
+    
+    const allHighlightedCommunities = new Set();
+    newExpanded.forEach((communities) => {
+      communities.forEach(comm => allHighlightedCommunities.add(comm));
+    });
+    setHighlightedNodes(Array.from(allHighlightedCommunities));
   }, [expandedPairs]);
 
   const handleCommunityPairClick = (community1, community2) => {
-    // 필터링된 전체 데이터 표시 (개수 제한 없음)
     const filtered = filterByCommunityPairClick(rawData, community1, community2, Infinity);
     setDisplayedPairs(filtered);
     setSelectedCommunities([community1, community2]);
@@ -74,7 +110,6 @@ const App = () => {
   };
 
   const handleNodeClick = (communityId) => {
-    // 필터링된 전체 데이터 표시 (개수 제한 없음)
     const filtered = filterByCommunity(rawData, communityId, Infinity);
     setDisplayedPairs(filtered);
     setSelectedCommunities([communityId]);
@@ -82,15 +117,13 @@ const App = () => {
   };
 
   const handleReset = () => {
-    // 전체 데이터로 복원 (개수 제한 없음)
-    const allPairs = getTopPredictedPairs(rawData, rawData.length);
-    setDisplayedPairs(allPairs);
+    const topPairs = getTopPredictedPairs(rawData, topN);
+    setDisplayedPairs(topPairs);
     setSelectedCommunities([]);
     setHighlightedNodes([]);
-    setExpandedPairs(new Set());
+    setExpandedPairs(new Map());
   };
 
-  // Intro 페이지 표시
   if (showIntro) {
     return <IntroPage onEnter={() => setShowIntro(false)} />;
   }
@@ -208,14 +241,56 @@ const App = () => {
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px'
           }}>
             <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
               Top Predicted Concept Pairs
             </h2>
-            <span style={{ color: '#7f8c8d', fontSize: '14px' }}>
-              Showing {displayedPairs.length} pairs
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              {selectedCommunities.length > 0 && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '6px 12px',
+                  background: '#e3f2fd',
+                  borderRadius: '20px',
+                  border: '1px solid #2196f3'
+                }}>
+                  <span style={{ fontSize: '13px', color: '#1976d2', fontWeight: '600' }}>
+                    🔍 Filtered:
+                  </span>
+                  <span style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>
+                    {selectedCommunities.join(' ↔ ')}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleReset();
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#1976d2',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      padding: '0',
+                      marginLeft: '4px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                    title="Clear filter"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+              <span style={{ color: '#7f8c8d', fontSize: '14px' }}>
+                Showing {displayedPairs.length} pairs
+              </span>
+            </div>
           </div>
 
           <ConceptPairsList
@@ -236,13 +311,60 @@ const App = () => {
             display: 'flex',
             flexDirection: 'column'
           }}>
-            <h2 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#2c3e50' }}>
-              Concept Communities Network
-            </h2>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '15px',
+              flexWrap: 'wrap',
+              gap: '10px'
+            }}>
+              <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
+                Concept Communities Network
+              </h2>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                {/* Top N 선택 */}
+                <select
+                  value={topN}
+                  onChange={(e) => setTopN(Number(e.target.value))}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    background: 'white'
+                  }}
+                >
+                  <option value={1000}>Top 1000</option>
+                  <option value={5000}>Top 5000</option>
+                  <option value={10000}>Top 10000</option>
+                  <option value={rawData.length}>All ({rawData.length})</option>
+                </select>
+                
+                {/* Weight Mode 선택 */}
+                <select
+                  value={weightMode}
+                  onChange={(e) => setWeightMode(e.target.value)}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    background: 'white'
+                  }}
+                >
+                  <option value="count">Count Mode</option>
+                  <option value="weighted">Weighted Mode</option>
+                </select>
+              </div>
+            </div>
             <NetworkGraph
               data={networkData}
               highlightedNodes={highlightedNodes}
               onNodeClick={handleNodeClick}
+              onLinkClick={handleCommunityPairClick}
             />
           </div>
 
@@ -251,6 +373,7 @@ const App = () => {
             selectedCommunities={selectedCommunities}
             onItemClick={handleCommunityPairClick}
             onReset={handleReset}
+            weightMode={weightMode}
           />
         </div>
       </div>

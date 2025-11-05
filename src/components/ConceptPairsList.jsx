@@ -47,6 +47,7 @@ const ConceptPairsList = ({ pairs, expandedPairs, onToggleExpand, childRelations
         minHeight: 0
       }}>
         {currentPairs.map(pair => {
+          // expandedPairs가 Map이므로 has()로 확인
           const isExpanded = expandedPairs.has(pair.rank);
           
           return (

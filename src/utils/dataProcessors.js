@@ -22,7 +22,7 @@ export const getTopPredictedPairs = (data, topN = 10) => {
   }));
 };
 
-export const getCommunityPairRanking = (data, topN = 10) => {
+export const getCommunityPairRanking = (data, topN = 10, weightMode = 'count') => {
   const communityStats = {};
   
   data.forEach(row => {
@@ -57,12 +57,19 @@ export const getCommunityPairRanking = (data, topN = 10) => {
       community2: stats.community2,
       connection_strength: parseFloat((stats.total_strength / stats.pairs.length).toFixed(3)),
       pair_count: stats.pairs.length,
+      total_pred_sum: parseFloat(stats.total_strength.toFixed(3)),
       display_text: `${stats.community1} <-> ${stats.community2}`,
       top_pair: stats.pairs.reduce((max, pair) => 
         pair.pred_score > max.pred_score ? pair : max, stats.pairs[0]
       )
     }))
-    .sort((a, b) => b.pair_count - a.pair_count)
+    .sort((a, b) => {
+      // weightMode에 따라 정렬 기준 변경
+      if (weightMode === 'weighted') {
+        return b.total_pred_sum - a.total_pred_sum;
+      }
+      return b.pair_count - a.pair_count;
+    })
     .slice(0, topN)
     .map((item, index) => ({ ...item, rank: index + 1 }));
   
@@ -118,7 +125,6 @@ export const getConceptPairChildren = (concept1, concept2, childRelations, data 
     common_children: children1.filter(child => children2.includes(child))
   };
   
-  // Add parent concept details if data is provided
   if (data) {
     [
       { key: 'concept1', name: concept1 },
@@ -151,7 +157,7 @@ export const getConceptPairChildren = (concept1, concept2, childRelations, data 
   return result;
 };
 
-export const getConceptCommunitiesNetwork = (data) => {
+export const getConceptCommunitiesNetwork = (data, weightMode = 'count') => {
   const communities = new Set();
   const linkMap = {};
   
@@ -161,7 +167,16 @@ export const getConceptCommunitiesNetwork = (data) => {
     
     if (row.c1_community !== row.c2_community) {
       const key = [row.c1_community, row.c2_community].sort().join('|||');
-      linkMap[key] = (linkMap[key] || 0) + row.pred;
+      
+      if (!linkMap[key]) {
+        linkMap[key] = {
+          count: 0,
+          predSum: 0
+        };
+      }
+      
+      linkMap[key].count += 1;
+      linkMap[key].predSum += row.pred;
     }
   });
   
@@ -177,12 +192,20 @@ export const getConceptCommunitiesNetwork = (data) => {
     };
   });
   
-  const links = Object.entries(linkMap).map(([key, weight]) => {
+  const links = Object.entries(linkMap).map(([key, value]) => {
     const [source, target] = key.split('|||');
+    
+    // weightMode에 따라 weight 결정
+    const weight = weightMode === 'weighted' 
+      ? parseFloat(value.predSum.toFixed(3))
+      : value.count;
+    
     return {
       source,
       target,
-      weight: parseFloat(weight.toFixed(3))
+      weight,
+      count: value.count,
+      predSum: parseFloat(value.predSum.toFixed(3))
     };
   });
   
