@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
-const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick }) => {
+const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBottomNodes = 5 }) => {
   const svgRef = useRef();
 
   useEffect(() => {
@@ -45,10 +45,16 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick }) => {
       .domain(data.nodes.map(n => n.id))
       .range(d3.schemeCategory10);
 
-    // 노드 필터링: 하위 5개 제거
-    const sortedNodes = [...data.nodes].sort((a, b) => b.size - a.size);
-    const nodesToRemove = sortedNodes.slice(-5).map(n => n.id);
-    const filteredNodes = data.nodes.filter(n => !nodesToRemove.includes(n.id));
+    // 노드 필터링: hideBottomNodes 값에 따라 하위 N개 제거
+    let filteredNodes = data.nodes;
+    let nodesToRemove = [];
+    
+    if (hideBottomNodes > 0) {
+      const sortedNodes = [...data.nodes].sort((a, b) => b.size - a.size);
+      nodesToRemove = sortedNodes.slice(-hideBottomNodes).map(n => n.id);
+      filteredNodes = data.nodes.filter(n => !nodesToRemove.includes(n.id));
+    }
+    
     const filteredLinks = data.links.filter(l => 
       !nodesToRemove.includes(l.source.id || l.source) && 
       !nodesToRemove.includes(l.target.id || l.target)
@@ -334,7 +340,7 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick }) => {
       tooltip.remove();
     };
 
-  }, [data, highlightedNodes, onNodeClick, onLinkClick]);
+  }, [data, highlightedNodes, onNodeClick, onLinkClick, hideBottomNodes]);
 
   return (
     <svg

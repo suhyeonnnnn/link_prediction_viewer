@@ -27,6 +27,7 @@ const App = () => {
   const [topN, setTopN] = useState(1000);
   const [weightMode, setWeightMode] = useState('count');
   const [showPreviousNetwork, setShowPreviousNetwork] = useState(false);
+  const [hideBottomNodes, setHideBottomNodes] = useState(5); // 0 = 모두 표시
   
   // Year filter states
   const [yearFilter, setYearFilter] = useState('all');
@@ -486,6 +487,26 @@ const App = () => {
                   </select>
                 )}
                 
+                {/* Hide Bottom Nodes - 새로운 옵션 */}
+                <select
+                  value={hideBottomNodes}
+                  onChange={(e) => setHideBottomNodes(Number(e.target.value))}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    background: 'white'
+                  }}
+                  title="Hide communities with fewest pairs"
+                >
+                  <option value={0}>Show All Nodes</option>
+                  <option value={3}>Hide Bottom 3</option>
+                  <option value={5}>Hide Bottom 5</option>
+                  <option value={10}>Hide Bottom 10</option>
+                </select>
+                
                 {/* Weight Mode */}
                 <select
                   value={weightMode}
@@ -509,6 +530,7 @@ const App = () => {
               highlightedNodes={highlightedNodes}
               onNodeClick={handleNodeClick}
               onLinkClick={handleCommunityPairClick}
+              hideBottomNodes={hideBottomNodes}
             />
           </div>
 
