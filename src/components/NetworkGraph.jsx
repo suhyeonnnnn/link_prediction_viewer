@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
-const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBottomNodes = 5 }) => {
+const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBottomNodes = 5, colorMap = {} }) => {
   const svgRef = useRef();
 
   useEffect(() => {
@@ -41,9 +41,10 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
     
     svg.call(zoom);
 
-    const colorScale = d3.scaleOrdinal()
-      .domain(data.nodes.map(n => n.id))
-      .range(d3.schemeCategory10);
+    // Use fixed color map
+    const getColor = (nodeId) => {
+      return colorMap[nodeId] || '#999999';  // fallback color
+    };
 
     // 노드 필터링: hideBottomNodes 값에 따라 하위 N개 제거
     let filteredNodes = data.nodes;
@@ -71,7 +72,7 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
       .force('link', d3.forceLink(filteredLinks).id(d => d.id).distance(150))
       .force('charge', d3.forceManyBody().strength(-600))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(40));
+      .force('collision', d3.forceCollide().radius(50));
 
     // Links - 강도에 따라 차별화 + 클릭 가능
     const link = g.append('g')
@@ -144,7 +145,7 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
             if (highlightedNodes.length > 0) {
               return highlightedNodes.includes(nodeId) ? 1.0 : 0.25;
             }
-            return 0.4; // hover 시 다른 노드는 흐리게
+            return 0.4;
           });
       })
       .on('mousemove', function(event) {
@@ -155,10 +156,8 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
       .on('mouseout', function(event, d) {
         const link = d3.select(this);
         
-        // 툴팁 숨기기
         tooltip.style('visibility', 'hidden');
         
-        // 링크 원상복구
         link
           .attr('stroke', d.weight >= weightThreshold ? '#555' : '#ddd')
           .attr('stroke-width', d.weight >= weightThreshold ? Math.min(Math.sqrt(d.weight) * 1.5, 4) : 1)
@@ -170,7 +169,6 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
             return 0.1;
           });
         
-        // 노드 원상복구
         node.selectAll('circle')
           .attr('stroke-width', d => highlightedNodes.includes(d.id) ? 3 : 2)
           .attr('opacity', d => {
@@ -190,20 +188,24 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
         .on('drag', dragged)
         .on('end', dragended));
 
-    // Nodes - 크기 축소
+    // Improved node sizing: more visible size differences
+    // Use power scale for better visual differentiation
+    const sizeScale = d3.scalePow()
+      .exponent(0.6)  // Makes differences more pronounced
+      .domain([0, d3.max(filteredNodes, d => d.size)])
+      .range([12, 45]);  // Larger range for better differentiation
+
     node.append('circle')
-      .attr('r', d => Math.min(8 + Math.sqrt(d.size) * 1.5, 30))
-      .attr('fill', d => colorScale(d.id))  // 항상 원래 색상 유지
+      .attr('r', d => sizeScale(d.size))
+      .attr('fill', d => getColor(d.id))  // Use fixed color from colorMap
       .attr('stroke', d => {
-        // 선택된 노드는 진한 테두리, 나머지는 흰색
         if (highlightedNodes.includes(d.id)) {
-          return d3.color(colorScale(d.id)).darker(1.5);  // 원래 색상의 어두운 버전
+          return d3.color(getColor(d.id)).darker(1.5);
         }
         return '#fff';
       })
       .attr('stroke-width', d => highlightedNodes.includes(d.id) ? 3 : 2)
       .attr('opacity', d => {
-        // 필터링 중일 때: 선택된 노드는 1.0, 나머지는 0.25
         if (highlightedNodes.length > 0) {
           return highlightedNodes.includes(d.id) ? 1.0 : 0.25;
         }
@@ -215,7 +217,6 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
         onNodeClick(d.id);
       })
       .on('mouseover', function(event, d) {
-        // 툴팁 표시 - 해당 커뮤니티의 concept pair 개수
         const pairCount = d.size || 0;
         tooltip.html(`<strong>Community:</strong> ${d.label}<br/><strong>Concept Pairs:</strong> ${pairCount}`)
           .style('visibility', 'visible')
@@ -224,7 +225,7 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
         
         d3.select(this)
           .attr('stroke-width', 4)
-          .attr('r', Math.min(8 + Math.sqrt(d.size) * 1.5, 30) * 1.2);
+          .attr('r', sizeScale(d.size) * 1.2);
       })
       .on('mousemove', function(event) {
         tooltip
@@ -232,24 +233,22 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
           .style('top', (event.pageY - 10) + 'px');
       })
       .on('mouseout', function(event, d) {
-        // 툴팁 숨기기
         tooltip.style('visibility', 'hidden');
         
         d3.select(this)
           .attr('stroke-width', highlightedNodes.includes(d.id) ? 3 : 2)
-          .attr('r', Math.min(8 + Math.sqrt(d.size) * 1.5, 30));
+          .attr('r', sizeScale(d.size));
       });
 
-    // Labels - 전체 텍스트 표시, 줄바꿈 처리
+    // Labels
     const labelGroup = node.append('g');
     
     const text = labelGroup.append('text')
       .attr('text-anchor', 'middle')
-      .attr('dy', d => Math.min(8 + Math.sqrt(d.size) * 1.5, 30) + 16)
+      .attr('dy', d => sizeScale(d.size) + 16)
       .attr('fill', '#2c3e50')
       .attr('font-weight', '600')
       .attr('opacity', d => {
-        // 필터링 중일 때: 선택된 노드 레이블은 1.0, 나머지는 0.3
         if (highlightedNodes.length > 0) {
           return highlightedNodes.includes(d.id) ? 1.0 : 0.3;
         }
@@ -257,7 +256,7 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
       })
       .style('pointer-events', 'none');
 
-    // 긴 텍스트를 여러 줄로 나누기
+    // Split long text into multiple lines
     text.each(function(d) {
       const textElement = d3.select(this);
       const words = d.label.split(' ');
@@ -289,7 +288,7 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
       });
     });
 
-    // Label background - 필터링 상태에 따라 투명도 조절
+    // Label background
     text.each(function(d) {
       const bbox = this.getBBox();
       const isHighlighted = highlightedNodes.includes(d.id);
@@ -334,13 +333,12 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
       d.fy = null;
     }
 
-    // Cleanup function - 컴포넌트 언마운트 시 tooltip 제거
     return () => {
       simulation.stop();
       tooltip.remove();
     };
 
-  }, [data, highlightedNodes, onNodeClick, onLinkClick, hideBottomNodes]);
+  }, [data, highlightedNodes, onNodeClick, onLinkClick, hideBottomNodes, colorMap]);
 
   return (
     <svg

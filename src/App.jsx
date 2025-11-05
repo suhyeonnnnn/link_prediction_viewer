@@ -27,7 +27,7 @@ const App = () => {
   const [topN, setTopN] = useState(1000);
   const [weightMode, setWeightMode] = useState('count');
   const [showPreviousNetwork, setShowPreviousNetwork] = useState(false);
-  const [hideBottomNodes, setHideBottomNodes] = useState(5); // 0 = 모두 표시
+  const [hideBottomNodes, setHideBottomNodes] = useState(5);
   
   // Year filter states
   const [yearFilter, setYearFilter] = useState('all');
@@ -56,6 +56,42 @@ const App = () => {
 
     loadData();
   }, []);
+
+  // Extract all unique communities and create fixed color mapping
+  const communityColorMap = useMemo(() => {
+    const allCommunities = new Set();
+    
+    // Extract from rawData
+    rawData.forEach(row => {
+      if (row.c1_community) allCommunities.add(row.c1_community);
+      if (row.c2_community) allCommunities.add(row.c2_community);
+    });
+    
+    // Extract from previousData
+    previousData.forEach(row => {
+      if (row.c1_community) allCommunities.add(row.c1_community);
+      if (row.c2_community) allCommunities.add(row.c2_community);
+    });
+    
+    // Sort alphabetically for consistent ordering
+    const sortedCommunities = Array.from(allCommunities).sort();
+    
+    // Extended color palette (d3.schemeCategory10 + additional colors)
+    const colors = [
+      '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+      '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+      '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5',
+      '#c49c94', '#f7b6d2', '#c7c7c7', '#dbdb8d', '#9edae5'
+    ];
+    
+    // Create color map
+    const colorMap = {};
+    sortedCommunities.forEach((community, index) => {
+      colorMap[community] = colors[index % colors.length];
+    });
+    
+    return colorMap;
+  }, [rawData, previousData]);
 
   useEffect(() => {
     if (selectedCommunities.length === 0 && rawData.length > 0) {
@@ -487,7 +523,7 @@ const App = () => {
                   </select>
                 )}
                 
-                {/* Hide Bottom Nodes - 새로운 옵션 */}
+                {/* Hide Bottom Nodes */}
                 <select
                   value={hideBottomNodes}
                   onChange={(e) => setHideBottomNodes(Number(e.target.value))}
@@ -531,6 +567,7 @@ const App = () => {
               onNodeClick={handleNodeClick}
               onLinkClick={handleCommunityPairClick}
               hideBottomNodes={hideBottomNodes}
+              colorMap={communityColorMap}
             />
           </div>
 
