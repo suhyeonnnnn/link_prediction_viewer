@@ -42,13 +42,33 @@ export const loadAllData = async () => {
   try {
     console.log('📥 Loading data files...');
     
-    const [csvData, childRelations] = await Promise.all([
+    const [csvData, previousData, childRelations] = await Promise.all([
       loadCSV('top_predicted_pairs.csv'),
+      loadCSV('previous_concept_pairs.csv'),
       loadJSON('child_relationships.json')
     ]);
     
+    // previous 데이터를 top_predicted_pairs와 동일한 형식으로 정규화
+    const normalizedPreviousData = previousData.map(row => ({
+      concept1: row.concept1,
+      concept2: row.concept2,
+      pred: 1.0,
+      c1_community: row.c1_community,
+      c2_community: row.c2_community,
+      publication_year: row.publication_year,
+      // 누락된 필드들 추가
+      concept1_freq: 'N/A',
+      concept2_freq: 'N/A',
+      concept1_top1_field: 'N/A',
+      concept1_top1_ratio: 0,
+      concept2_top1_field: 'N/A',
+      concept2_top1_ratio: 0
+    }));
+    
     console.log('✅ All data loaded successfully');
-    return { csvData, childRelations };
+    console.log(`📊 Predicted pairs: ${csvData.length}, Previous pairs: ${normalizedPreviousData.length}`);
+    
+    return { csvData, previousData: normalizedPreviousData, childRelations };
   } catch (error) {
     console.error('❌ Error loading data:', error);
     throw error;

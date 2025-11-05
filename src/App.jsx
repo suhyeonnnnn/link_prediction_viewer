@@ -15,6 +15,7 @@ import IntroPage from './components/IntroPage';
 const App = () => {
   const [showIntro, setShowIntro] = useState(true);
   const [rawData, setRawData] = useState([]);
+  const [previousData, setPreviousData] = useState([]);
   const [childRelations, setChildRelations] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,19 +24,25 @@ const App = () => {
   const [selectedCommunities, setSelectedCommunities] = useState([]);
   const [highlightedNodes, setHighlightedNodes] = useState([]);
   
-  // 새로운 상태: topN과 weightMode
   const [topN, setTopN] = useState(1000);
   const [weightMode, setWeightMode] = useState('count');
+  const [showPreviousNetwork, setShowPreviousNetwork] = useState(false);
+  
+  // Year filter states
+  const [yearFilter, setYearFilter] = useState('all');
+  const [customStartYear, setCustomStartYear] = useState(2000);
+  const [customEndYear, setCustomEndYear] = useState(2024);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const { csvData, childRelations: relations } = await loadAllData();
+        const { csvData, previousData: prevData, childRelations: relations } = await loadAllData();
         
         setRawData(csvData);
+        setPreviousData(prevData);
         setChildRelations(relations);
-        // topN개만큼만 표시
+        
         const topPairs = getTopPredictedPairs(csvData, topN);
         setDisplayedPairs(topPairs);
         setIsLoading(false);
@@ -49,7 +56,6 @@ const App = () => {
     loadData();
   }, []);
 
-  // topN이 변경될 때 displayedPairs 업데이트 (필터링이 없는 경우에만)
   useEffect(() => {
     if (selectedCommunities.length === 0 && rawData.length > 0) {
       const topPairs = getTopPredictedPairs(rawData, topN);
@@ -57,34 +63,67 @@ const App = () => {
     }
   }, [topN, rawData, selectedCommunities]);
 
-  // topN과 weightMode에 따라 filteredData 생성
-  const filteredData = useMemo(() => {
-    if (!rawData.length) return [];
-    return getTopPredictedPairs(rawData, topN);
-  }, [rawData, topN]);
+  // Apply year filter to previous data
+  const filteredPreviousData = useMemo(() => {
+    if (yearFilter === 'all') return previousData;
+    
+    let startYear, endYear;
+    if (yearFilter === 'last5') {
+      startYear = 2020;
+      endYear = 2024;
+    } else if (yearFilter === 'last10') {
+      startYear = 2015;
+      endYear = 2024;
+    } else if (yearFilter === 'custom') {
+      startYear = customStartYear;
+      endYear = customEndYear;
+    } else {
+      return previousData;
+    }
+    
+    return previousData.filter(row => {
+      const year = row.publication_year;
+      return year && year >= startYear && year <= endYear;
+    });
+  }, [previousData, yearFilter, customStartYear, customEndYear]);
+
+  // Select network source data
+  const networkSourceData = showPreviousNetwork ? filteredPreviousData : rawData;
+
+  const networkFilteredData = useMemo(() => {
+    if (!networkSourceData || networkSourceData.length === 0) return [];
+    
+    const count = showPreviousNetwork ? networkSourceData.length : topN;
+    return getTopPredictedPairs(networkSourceData, count);
+  }, [networkSourceData, topN, showPreviousNetwork]);
 
   const networkData = useMemo(() => {
-    if (!filteredData.length) return { nodes: [], links: [] };
-    // filteredData를 rawData 형식으로 변환
-    const dataForNetwork = filteredData.map(pair => ({
+    if (!networkFilteredData || networkFilteredData.length === 0) {
+      return { nodes: [], links: [] };
+    }
+    
+    const dataForNetwork = networkFilteredData.map(pair => ({
       c1_community: pair.community1,
       c2_community: pair.community2,
       pred: pair.prediction_score
     }));
+    
     return getConceptCommunitiesNetwork(dataForNetwork, weightMode);
-  }, [filteredData, weightMode]);
+  }, [networkFilteredData, weightMode]);
 
   const communityRanking = useMemo(() => {
-    if (!filteredData.length) return [];
-    const dataForRanking = filteredData.map(pair => ({
+    if (!networkFilteredData || networkFilteredData.length === 0) return [];
+    
+    const dataForRanking = networkFilteredData.map(pair => ({
       c1_community: pair.community1,
       c2_community: pair.community2,
       concept1: pair.concept1,
       concept2: pair.concept2,
       pred: pair.prediction_score
     }));
+    
     return getCommunityPairRanking(dataForRanking, Infinity, weightMode);
-  }, [filteredData, weightMode]);
+  }, [networkFilteredData, weightMode]);
 
   const handleToggleExpand = React.useCallback((pair) => {
     const newExpanded = new Map(expandedPairs);
@@ -179,6 +218,7 @@ const App = () => {
           </p>
           <ul style={{ fontSize: '14px', color: '#7f8c8d' }}>
             <li>top_predicted_pairs.csv</li>
+            <li>previous_concept_pairs.csv</li>
             <li>child_relationships.json</li>
           </ul>
         </div>
@@ -221,7 +261,7 @@ const App = () => {
           Service Research Forecast
         </span>
         <div style={{ fontSize: '14px', fontWeight: 'normal', opacity: 0.8 }}>
-          Total Pairs: {rawData.length} | Communities: {networkData.nodes.length}
+          Predicted: {rawData.length} | Previous: {previousData.length} | Network: {networkFilteredData.length} pairs, {networkData.nodes.length} communities
         </div>
       </div>
 
@@ -322,27 +362,131 @@ const App = () => {
               <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
                 Concept Communities Network
               </h2>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                {/* Top N 선택 */}
-                <select
-                  value={topN}
-                  onChange={(e) => setTopN(Number(e.target.value))}
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid #ddd',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    background: 'white'
-                  }}
-                >
-                  <option value={1000}>Top 1000</option>
-                  <option value={5000}>Top 5000</option>
-                  <option value={10000}>Top 10000</option>
-                  <option value={rawData.length}>All ({rawData.length})</option>
-                </select>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                {/* Network Type Toggle */}
+                <div style={{
+                  display: 'flex',
+                  gap: '0',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  overflow: 'hidden'
+                }}>
+                  <button
+                    onClick={() => {
+                      setShowPreviousNetwork(false);
+                      setYearFilter('all');
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      border: 'none',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      background: !showPreviousNetwork ? '#3498db' : 'white',
+                      color: !showPreviousNetwork ? 'white' : '#7f8c8d',
+                      fontWeight: !showPreviousNetwork ? '600' : 'normal',
+                      transition: 'all 0.2s ease',
+                      borderRight: '1px solid #ddd'
+                    }}
+                  >
+                    📈 Predicted
+                  </button>
+                  <button
+                    onClick={() => setShowPreviousNetwork(true)}
+                    style={{
+                      padding: '6px 12px',
+                      border: 'none',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      background: showPreviousNetwork ? '#27ae60' : 'white',
+                      color: showPreviousNetwork ? 'white' : '#7f8c8d',
+                      fontWeight: showPreviousNetwork ? '600' : 'normal',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    📊 Previous
+                  </button>
+                </div>
                 
-                {/* Weight Mode 선택 */}
+                {/* Year Filter - Previous mode only */}
+                {showPreviousNetwork && (
+                  <select
+                    value={yearFilter}
+                    onChange={(e) => setYearFilter(e.target.value)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid #ddd',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      background: 'white'
+                    }}
+                  >
+                    <option value="all">All Years</option>
+                    <option value="last5">Last 5 Years (2020-2024)</option>
+                    <option value="last10">Last 10 Years (2015-2024)</option>
+                    <option value="custom">Custom Range</option>
+                  </select>
+                )}
+                
+                {/* Custom Year Range */}
+                {showPreviousNetwork && yearFilter === 'custom' && (
+                  <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      value={customStartYear}
+                      onChange={(e) => setCustomStartYear(Number(e.target.value))}
+                      min="2000"
+                      max="2024"
+                      style={{
+                        width: '65px',
+                        padding: '6px 8px',
+                        borderRadius: '6px',
+                        border: '1px solid #ddd',
+                        fontSize: '13px'
+                      }}
+                      placeholder="Start"
+                    />
+                    <span style={{ color: '#7f8c8d', fontSize: '13px' }}>-</span>
+                    <input
+                      type="number"
+                      value={customEndYear}
+                      onChange={(e) => setCustomEndYear(Number(e.target.value))}
+                      min="2000"
+                      max="2024"
+                      style={{
+                        width: '65px',
+                        padding: '6px 8px',
+                        borderRadius: '6px',
+                        border: '1px solid #ddd',
+                        fontSize: '13px'
+                      }}
+                      placeholder="End"
+                    />
+                  </div>
+                )}
+                
+                {/* Top N selector - Predicted mode only */}
+                {!showPreviousNetwork && (
+                  <select
+                    value={topN}
+                    onChange={(e) => setTopN(Number(e.target.value))}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid #ddd',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      background: 'white'
+                    }}
+                  >
+                    <option value={1000}>Top 1000</option>
+                    <option value={5000}>Top 5000</option>
+                    <option value={10000}>Top 10000</option>
+                    <option value={rawData.length}>All ({rawData.length})</option>
+                  </select>
+                )}
+                
+                {/* Weight Mode */}
                 <select
                   value={weightMode}
                   onChange={(e) => setWeightMode(e.target.value)}
