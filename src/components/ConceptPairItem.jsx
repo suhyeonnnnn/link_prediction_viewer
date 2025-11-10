@@ -6,16 +6,38 @@ const ConceptPairItem = ({
   onToggleExpand, 
   childRelations,
   colorMap = {},
-  isFiltered = false
+  isFiltered = false,
+  selectedCommunities = []
 }) => {
   const [showAllChildren1, setShowAllChildren1] = useState(false);
   const [showAllChildren2, setShowAllChildren2] = useState(false);
   
   const INITIAL_CHILD_COUNT = 20;
   
-  // Get colors for communities - use black when not filtered
-  const color1 = isFiltered ? (colorMap[pair.community1] || '#2c3e50') : '#2c3e50';
-  const color2 = isFiltered ? (colorMap[pair.community2] || '#2c3e50') : '#2c3e50';
+  // Determine if this is a node filter (1 community) or edge filter (2 communities)
+  const isNodeFilter = selectedCommunities.length === 1;
+  const isEdgeFilter = selectedCommunities.length === 2;
+  
+  // For node filter: only color the concept that belongs to the selected community
+  // For edge filter: color both concepts
+  let color1 = '#2c3e50'; // default black
+  let color2 = '#2c3e50'; // default black
+  
+  if (isFiltered) {
+    if (isNodeFilter) {
+      // Only color the concept if it belongs to the selected community
+      if (selectedCommunities.includes(pair.community1)) {
+        color1 = colorMap[pair.community1] || '#2c3e50';
+      }
+      if (selectedCommunities.includes(pair.community2)) {
+        color2 = colorMap[pair.community2] || '#2c3e50';
+      }
+    } else if (isEdgeFilter) {
+      // Color both concepts in edge filter
+      color1 = colorMap[pair.community1] || '#2c3e50';
+      color2 = colorMap[pair.community2] || '#2c3e50';
+    }
+  }
   
   return (
     <div 
@@ -42,7 +64,7 @@ const ConceptPairItem = ({
         }
       }}
     >
-      {/* Header with arrow - colored concept names only when filtered */}
+      {/* Header with arrow - colored concept names based on filter type */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -110,9 +132,9 @@ const ConceptPairItem = ({
               </div>
               <div style={{ 
                 fontSize: '12px', 
-                color: isFiltered ? color1 : '#27ae60', 
+                color: isFiltered && (isEdgeFilter || selectedCommunities.includes(pair.community1)) ? color1 : '#27ae60', 
                 fontWeight: '600',
-                background: isFiltered ? `${color1}15` : '#e8f5e9',
+                background: isFiltered && (isEdgeFilter || selectedCommunities.includes(pair.community1)) ? `${color1}15` : '#e8f5e9',
                 padding: '4px 8px',
                 borderRadius: '4px',
                 display: 'inline-block'
@@ -142,9 +164,9 @@ const ConceptPairItem = ({
               </div>
               <div style={{ 
                 fontSize: '12px', 
-                color: isFiltered ? color2 : '#27ae60', 
+                color: isFiltered && (isEdgeFilter || selectedCommunities.includes(pair.community2)) ? color2 : '#27ae60', 
                 fontWeight: '600',
-                background: isFiltered ? `${color2}15` : '#e8f5e9',
+                background: isFiltered && (isEdgeFilter || selectedCommunities.includes(pair.community2)) ? `${color2}15` : '#e8f5e9',
                 padding: '4px 8px',
                 borderRadius: '4px',
                 display: 'inline-block'

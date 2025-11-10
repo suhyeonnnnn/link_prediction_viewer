@@ -409,6 +409,7 @@ const App = () => {
             childRelations={childRelations}
             colorMap={communityColorMap}
             isFiltered={selectedCommunities.length > 0}
+            selectedCommunities={selectedCommunities}
           />
         </div>
 
