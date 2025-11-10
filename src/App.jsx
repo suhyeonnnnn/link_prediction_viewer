@@ -617,22 +617,7 @@ const App = () => {
                   <option value={10}>Hide Bottom 10</option>
                 </select>
                 
-                {/* Weight Mode */}
-                <select
-                  value={weightMode}
-                  onChange={(e) => setWeightMode(e.target.value)}
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid #ddd',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    background: 'white'
-                  }}
-                >
-                  <option value="count">Count Mode</option>
-                  <option value="weighted">Weighted Mode</option>
-                </select>
+          
               </div>
             </div>
             <NetworkGraph
