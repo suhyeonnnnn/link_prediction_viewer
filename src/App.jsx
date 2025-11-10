@@ -5,7 +5,9 @@ import {
   getCommunityPairRanking,
   filterByCommunityPairClick,
   filterByCommunity,
-  getConceptCommunitiesNetwork
+  getConceptCommunitiesNetwork,
+  filterFormattedByCommunityPair,
+  filterFormattedByCommunity
 } from './utils/dataProcessors';
 import NetworkGraph from './components/NetworkGraph';
 import ConceptPairsList from './components/ConceptPairsList';
@@ -28,6 +30,7 @@ const App = () => {
   const [weightMode, setWeightMode] = useState('count');
   const [showPreviousNetwork, setShowPreviousNetwork] = useState(false);
   const [hideBottomNodes, setHideBottomNodes] = useState(5);
+  const [topPredictedPairs, setTopPredictedPairs] = useState([]);
   
   // Year filter states
   const [yearFilter, setYearFilter] = useState('all');
@@ -46,6 +49,7 @@ const App = () => {
         
         const topPairs = getTopPredictedPairs(csvData, topN);
         setDisplayedPairs(topPairs);
+        setTopPredictedPairs(topPairs);
         setIsLoading(false);
       } catch (err) {
         console.error('Error loading data:', err);
@@ -97,6 +101,7 @@ const App = () => {
     if (selectedCommunities.length === 0 && rawData.length > 0) {
       const topPairs = getTopPredictedPairs(rawData, topN);
       setDisplayedPairs(topPairs);
+      setTopPredictedPairs(topPairs);
     }
   }, [topN, rawData, selectedCommunities]);
 
@@ -179,22 +184,21 @@ const App = () => {
   }, [expandedPairs]);
 
   const handleCommunityPairClick = (community1, community2) => {
-    const filtered = filterByCommunityPairClick(rawData, community1, community2, Infinity);
+    const filtered = filterFormattedByCommunityPair(topPredictedPairs, community1, community2);
     setDisplayedPairs(filtered);
     setSelectedCommunities([community1, community2]);
     setHighlightedNodes([community1, community2]);
   };
 
   const handleNodeClick = (communityId) => {
-    const filtered = filterByCommunity(rawData, communityId, Infinity);
+    const filtered = filterFormattedByCommunity(topPredictedPairs, communityId);
     setDisplayedPairs(filtered);
     setSelectedCommunities([communityId]);
     setHighlightedNodes([communityId]);
   };
 
   const handleReset = () => {
-    const topPairs = getTopPredictedPairs(rawData, topN);
-    setDisplayedPairs(topPairs);
+    setDisplayedPairs(topPredictedPairs);
     setSelectedCommunities([]);
     setHighlightedNodes([]);
     setExpandedPairs(new Map());
@@ -325,38 +329,64 @@ const App = () => {
             <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
               Top Predicted Concept Pairs
             </h2>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
               {selectedCommunities.length > 0 && (
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  padding: '6px 12px',
-                  background: '#e3f2fd',
-                  borderRadius: '20px',
-                  border: '1px solid #2196f3'
+                  gap: '10px',
+                  padding: '10px 16px',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+                  animation: 'fadeIn 0.3s ease-in'
                 }}>
-                  <span style={{ fontSize: '13px', color: '#1976d2', fontWeight: '600' }}>
-                    🔍 Filtered:
+                  <span style={{ 
+                    fontSize: '16px', 
+                    color: 'white', 
+                    fontWeight: '700',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                  }}>
+                    🔍 FILTERED
                   </span>
-                  <span style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>
-                    {selectedCommunities.join(' ↔ ')}
-                  </span>
+                  <div style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    <span style={{ 
+                      fontSize: '14px', 
+                      color: 'white', 
+                      fontWeight: '600',
+                      letterSpacing: '0.3px'
+                    }}>
+                      {selectedCommunities.join(' ↔ ')}
+                    </span>
+                  </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleReset();
                     }}
                     style={{
-                      background: 'none',
+                      background: 'rgba(255,255,255,0.2)',
                       border: 'none',
-                      color: '#1976d2',
+                      color: 'white',
                       cursor: 'pointer',
-                      fontSize: '16px',
-                      padding: '0',
-                      marginLeft: '4px',
+                      fontSize: '18px',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
                       display: 'flex',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      fontWeight: 'bold',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'rgba(255,255,255,0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'rgba(255,255,255,0.2)';
                     }}
                     title="Clear filter"
                   >
@@ -364,8 +394,8 @@ const App = () => {
                   </button>
                 </div>
               )}
-              <span style={{ color: '#7f8c8d', fontSize: '14px' }}>
-                Showing {displayedPairs.length} pairs
+              <span style={{ color: '#7f8c8d', fontSize: '14px', fontWeight: '600' }}>
+                {displayedPairs.length} pairs
               </span>
             </div>
           </div>
@@ -375,6 +405,8 @@ const App = () => {
             expandedPairs={expandedPairs}
             onToggleExpand={handleToggleExpand}
             childRelations={childRelations}
+            colorMap={communityColorMap}
+            isFiltered={selectedCommunities.length > 0}
           />
         </div>
 
@@ -580,6 +612,19 @@ const App = () => {
           />
         </div>
       </div>
+      
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };

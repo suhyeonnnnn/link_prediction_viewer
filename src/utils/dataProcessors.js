@@ -239,3 +239,24 @@ export const filterByCommunity = (data, communityId, topN = 20) => {
     community_text: `${row.c1_community} <-> ${row.c2_community}`
   }));
 };
+
+// ===== NEW FUNCTIONS FOR EFFICIENT FILTERING =====
+
+// Filter already formatted data by community pair
+export const filterFormattedByCommunityPair = (formattedData, community1, community2) => {
+  const filtered = formattedData.filter(pair =>
+    (pair.community1 === community1 && pair.community2 === community2) ||
+    (pair.community1 === community2 && pair.community2 === community1)
+  );
+  
+  return filtered.map((pair, index) => ({ ...pair, rank: index + 1 }));
+};
+
+// Filter already formatted data by single community
+export const filterFormattedByCommunity = (formattedData, communityId) => {
+  const filtered = formattedData.filter(pair =>
+    pair.community1 === communityId || pair.community2 === communityId
+  );
+  
+  return filtered.map((pair, index) => ({ ...pair, rank: index + 1 }));
+};

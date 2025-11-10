@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ConceptPairItem from './ConceptPairItem';
 
-const ConceptPairsList = ({ pairs, expandedPairs, onToggleExpand, childRelations }) => {
+const ConceptPairsList = ({ pairs, expandedPairs, onToggleExpand, childRelations, colorMap = {}, isFiltered = false }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
   
@@ -57,6 +57,8 @@ const ConceptPairsList = ({ pairs, expandedPairs, onToggleExpand, childRelations
               isExpanded={isExpanded}
               onToggleExpand={onToggleExpand}
               childRelations={childRelations}
+              colorMap={colorMap}
+              isFiltered={isFiltered}
             />
           );
         })}
@@ -145,7 +147,7 @@ const ConceptPairsList = ({ pairs, expandedPairs, onToggleExpand, childRelations
               border: 'none',
               borderRadius: '4px',
               background: currentPage === totalPages ? '#e0e0e0' : '#27ae60',
-              color: currentPage === totalPages ? '#999' : 'white',
+              color: currentPage === totalPages ? '999' : 'white',
               cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
               fontWeight: '600',
               fontSize: '13px'

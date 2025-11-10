@@ -4,12 +4,18 @@ const ConceptPairItem = ({
   pair, 
   isExpanded, 
   onToggleExpand, 
-  childRelations 
+  childRelations,
+  colorMap = {},
+  isFiltered = false
 }) => {
   const [showAllChildren1, setShowAllChildren1] = useState(false);
   const [showAllChildren2, setShowAllChildren2] = useState(false);
   
   const INITIAL_CHILD_COUNT = 20;
+  
+  // Get colors for communities - use black when not filtered
+  const color1 = isFiltered ? (colorMap[pair.community1] || '#2c3e50') : '#2c3e50';
+  const color2 = isFiltered ? (colorMap[pair.community2] || '#2c3e50') : '#2c3e50';
   
   return (
     <div 
@@ -36,7 +42,7 @@ const ConceptPairItem = ({
         }
       }}
     >
-      {/* Header with arrow */}
+      {/* Header with arrow - colored concept names only when filtered */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -45,11 +51,13 @@ const ConceptPairItem = ({
       }}>
         <div style={{
           fontWeight: 'bold',
-          color: '#2c3e50',
           fontSize: '15px',
           flex: 1
         }}>
-          {pair.rank}. {pair.concept1} ↔ {pair.concept2}
+          <span style={{ color: '#7f8c8d' }}>{pair.rank}. </span>
+          <span style={{ color: color1, fontWeight: 'bold' }}>{pair.concept1}</span>
+          <span style={{ color: '#7f8c8d' }}> ↔ </span>
+          <span style={{ color: color2, fontWeight: 'bold' }}>{pair.concept2}</span>
         </div>
         <div style={{
           fontSize: '18px',
@@ -86,7 +94,7 @@ const ConceptPairItem = ({
             <div style={{ flex: 1 }}>
               <div style={{
                 fontWeight: '700',
-                color: '#2c3e50',
+                color: color1,
                 marginBottom: '8px',
                 fontSize: '13px'
               }}>
@@ -100,7 +108,15 @@ const ConceptPairItem = ({
                 <span style={{ marginRight: '4px' }}>🏷️</span>
                 {pair.concept1_field} ({pair.concept1_field_ratio})
               </div>
-              <div style={{ fontSize: '12px', color: '#27ae60', fontWeight: '600' }}>
+              <div style={{ 
+                fontSize: '12px', 
+                color: isFiltered ? color1 : '#27ae60', 
+                fontWeight: '600',
+                background: isFiltered ? `${color1}15` : '#e8f5e9',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                display: 'inline-block'
+              }}>
                 <span style={{ marginRight: '4px' }}>🔗</span>
                 {pair.community1}
               </div>
@@ -110,7 +126,7 @@ const ConceptPairItem = ({
             <div style={{ flex: 1 }}>
               <div style={{
                 fontWeight: '700',
-                color: '#2c3e50',
+                color: color2,
                 marginBottom: '8px',
                 fontSize: '13px'
               }}>
@@ -124,7 +140,15 @@ const ConceptPairItem = ({
                 <span style={{ marginRight: '4px' }}>🏷️</span>
                 {pair.concept2_field} ({pair.concept2_field_ratio})
               </div>
-              <div style={{ fontSize: '12px', color: '#27ae60', fontWeight: '600' }}>
+              <div style={{ 
+                fontSize: '12px', 
+                color: isFiltered ? color2 : '#27ae60', 
+                fontWeight: '600',
+                background: isFiltered ? `${color2}15` : '#e8f5e9',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                display: 'inline-block'
+              }}>
                 <span style={{ marginRight: '4px' }}>🔗</span>
                 {pair.community2}
               </div>
