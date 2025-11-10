@@ -27,9 +27,11 @@ const App = () => {
   const [highlightedNodes, setHighlightedNodes] = useState([]);
   
   const [topN, setTopN] = useState(1000);
+  const [topNMode, setTopNMode] = useState('1000');
+  const [customTopN, setCustomTopN] = useState(1000);
   const [weightMode, setWeightMode] = useState('count');
   const [showPreviousNetwork, setShowPreviousNetwork] = useState(false);
-  const [hideBottomNodes, setHideBottomNodes] = useState(5);
+  const [hideBottomNodes, setHideBottomNodes] = useState(0);
   const [topPredictedPairs, setTopPredictedPairs] = useState([]);
   
   // Year filter states
@@ -536,23 +538,62 @@ const App = () => {
                 
                 {/* Top N selector - Predicted mode only */}
                 {!showPreviousNetwork && (
-                  <select
-                    value={topN}
-                    onChange={(e) => setTopN(Number(e.target.value))}
-                    style={{
-                      padding: '6px 10px',
-                      borderRadius: '6px',
-                      border: '1px solid #ddd',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                      background: 'white'
-                    }}
-                  >
-                    <option value={1000}>Top 1000</option>
-                    <option value={5000}>Top 5000</option>
-                    <option value={10000}>Top 10000</option>
-                    <option value={rawData.length}>All ({rawData.length})</option>
-                  </select>
+                  <>
+                    <select
+                      value={topNMode}
+                      onChange={(e) => {
+                        const mode = e.target.value;
+                        setTopNMode(mode);
+                        if (mode === '1000') {
+                          setTopN(1000);
+                        } else if (mode === '5000') {
+                          setTopN(5000);
+                        } else if (mode === '10000') {
+                          setTopN(10000);
+                        } else if (mode === 'all') {
+                          setTopN(rawData.length);
+                        } else if (mode === 'custom') {
+                          setTopN(customTopN);
+                        }
+                      }}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid #ddd',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        background: 'white'
+                      }}
+                    >
+                      <option value="1000">Top 1000</option>
+                      <option value="5000">Top 5000</option>
+                      <option value="10000">Top 10000</option>
+                      <option value="all">All ({rawData.length})</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                    
+                    {topNMode === 'custom' && (
+                      <input
+                        type="number"
+                        value={customTopN}
+                        onChange={(e) => {
+                          const value = Number(e.target.value);
+                          setCustomTopN(value);
+                          setTopN(value);
+                        }}
+                        min="1"
+                        max={rawData.length}
+                        style={{
+                          width: '80px',
+                          padding: '6px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid #ddd',
+                          fontSize: '13px'
+                        }}
+                        placeholder="Top N"
+                      />
+                    )}
+                  </>
                 )}
                 
                 {/* Hide Bottom Nodes */}

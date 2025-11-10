@@ -67,6 +67,14 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
     const minWeight = Math.min(...weights);
     const weightThreshold = minWeight + (maxWeight - minWeight) * 0.3;
 
+    // Stroke width scale function
+    const getStrokeWidth = (weight) => {
+      const minWidth = 1;
+      const maxWidth = 6;
+      const normalized = (weight - minWeight) / (maxWeight - minWeight);
+      return minWidth + normalized * (maxWidth - minWidth);
+    };
+
     // Force simulation with adjusted parameters
     const simulation = d3.forceSimulation(filteredNodes)
       .force('link', d3.forceLink(filteredLinks).id(d => d.id).distance(150))
@@ -89,18 +97,12 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
       .attr('stroke-opacity', d => {
         if (d.weight >= weightThreshold) {
           const normalized = (d.weight - weightThreshold) / (maxWeight - weightThreshold);
-          return 0.4 + normalized * 0.4;
+          return 0.5 + normalized * 0.4;
         } else {
-          return 0.1;
+          return 0.15;
         }
       })
-      .attr('stroke-width', d => {
-        if (d.weight >= weightThreshold) {
-          return Math.min(Math.sqrt(d.weight) * 1.5, 4);
-        } else {
-          return 1;
-        }
-      })
+      .attr('stroke-width', d => getStrokeWidth(d.weight))
       .style('cursor', 'pointer')
       .on('click', (event, d) => {
         event.stopPropagation();
@@ -160,7 +162,7 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
         
         link
           .attr('stroke', d.weight >= weightThreshold ? '#555' : '#ddd')
-          .attr('stroke-width', d.weight >= weightThreshold ? Math.min(Math.sqrt(d.weight) * 1.5, 4) : 1)
+          .attr('stroke-width', getStrokeWidth(d.weight))
           .attr('stroke-opacity', d => {
             if (d.weight >= weightThreshold) {
               const normalized = (d.weight - weightThreshold) / (maxWeight - weightThreshold);
