@@ -27,6 +27,8 @@ const App = () => {
   const [expandedPairs, setExpandedPairs] = useState(new Map());
   const [selectedCommunities, setSelectedCommunities] = useState([]);
   const [highlightedNodes, setHighlightedNodes] = useState([]);
+  const [filterMode, setFilterMode] = useState(null); // null, 'pair', 'community', or 'matrix'
+  const [matrixCategory, setMatrixCategory] = useState(null); // 'High-High', 'High-Low', etc.
   
   const [topN, setTopN] = useState(1000);
   const [topNMode, setTopNMode] = useState('1000');
@@ -182,6 +184,20 @@ const App = () => {
       weightMode
     );
     
+    // Calculate previous ranking (sort by previous_count)
+    const previousRanking = [...fullRanking]
+      .filter(item => item.previous_count > 0)
+      .sort((a, b) => b.previous_count - a.previous_count)
+      .map((item, index) => ({
+        pairKey: `${item.community1}|||${item.community2}`,
+        previousRank: index + 1
+      }));
+    
+    const previousRankMap = {};
+    previousRanking.forEach(item => {
+      previousRankMap[item.pairKey] = item.previousRank;
+    });
+    
     // Sort based on ranking mode
     let sorted;
     if (rankingMode === 'rising') {
@@ -191,11 +207,24 @@ const App = () => {
       sorted = [...fullRanking].sort((a, b) => b.predicted_count - a.predicted_count);
     }
     
-    // Add rank and return top items
-    return sorted.slice(0, 20).map((item, index) => ({
-      ...item,
-      rank: index + 1
-    }));
+    // Add rank and previous rank
+    return sorted.map((item, index) => {
+      const pairKey = `${item.community1}|||${item.community2}`;
+      const previousRank = previousRankMap[pairKey];
+      const currentRank = index + 1;
+      
+      let rankChange = null;
+      if (previousRank) {
+        rankChange = previousRank - currentRank; // positive means moved up
+      }
+      
+      return {
+        ...item,
+        rank: currentRank,
+        previousRank: previousRank || null,
+        rankChange: rankChange
+      };
+    });
   }, [networkFilteredData, previousData, weightMode, rankingMode]);
 
   const handleToggleExpand = React.useCallback((pair) => {
@@ -219,6 +248,31 @@ const App = () => {
     setDisplayedPairs(filtered);
     setSelectedCommunities([community1, community2]);
     setHighlightedNodes([community1, community2]);
+    setFilterMode('pair');
+    setMatrixCategory(null);
+  };
+
+  const handleMatrixCategoryClick = (categoryPairs, categoryName) => {
+    // Extract all community pairs from the category
+    const communityPairSet = new Set();
+    categoryPairs.forEach(item => {
+      communityPairSet.add(item.community1);
+      communityPairSet.add(item.community2);
+    });
+    
+    // Filter top predicted pairs that belong to any of these community pairs
+    const filtered = topPredictedPairs.filter(pair => {
+      return categoryPairs.some(catItem => 
+        (catItem.community1 === pair.community1 && catItem.community2 === pair.community2) ||
+        (catItem.community1 === pair.community2 && catItem.community2 === pair.community1)
+      );
+    });
+    
+    setDisplayedPairs(filtered);
+    setSelectedCommunities(Array.from(communityPairSet));
+    setHighlightedNodes(Array.from(communityPairSet));
+    setFilterMode('matrix');
+    setMatrixCategory(categoryName);
   };
 
   const handleNodeClick = (communityId) => {
@@ -226,6 +280,8 @@ const App = () => {
     setDisplayedPairs(filtered);
     setSelectedCommunities([communityId]);
     setHighlightedNodes([communityId]);
+    setFilterMode('community');
+    setMatrixCategory(null);
   };
 
   const handleReset = () => {
@@ -233,6 +289,8 @@ const App = () => {
     setSelectedCommunities([]);
     setHighlightedNodes([]);
     setExpandedPairs(new Map());
+    setFilterMode(null);
+    setMatrixCategory(null);
   };
 
   if (showIntro) {
@@ -425,7 +483,9 @@ const App = () => {
                   alignItems: 'center',
                   gap: '10px',
                   padding: '10px 16px',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: filterMode === 'matrix' 
+                    ? 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)'
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   borderRadius: '8px',
                   boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
                   animation: 'fadeIn 0.3s ease-in'
@@ -450,7 +510,16 @@ const App = () => {
                       fontWeight: '600',
                       letterSpacing: '0.3px'
                     }}>
-                      {selectedCommunities.join(' ↔ ')}
+                      {filterMode === 'matrix' ? (
+                        <>
+                          {matrixCategory === 'High-High' && 'Core & Persistent'}
+                          {matrixCategory === 'High-Low' && 'Emerging/Rising'}
+                          {matrixCategory === 'Low-High' && 'Declining'}
+                          {matrixCategory === 'Low-Low' && 'Peripheral'}
+                        </>
+                      ) : (
+                        selectedCommunities.join(' ↔ ')
+                      )}
                     </span>
                   </div>
                   <button
@@ -749,6 +818,7 @@ const App = () => {
             onReset={handleReset}
             rankingMode={rankingMode}
             onRankingModeChange={setRankingMode}
+            onMatrixCategoryClick={handleMatrixCategoryClick}
           />
         </div>
       </div>
