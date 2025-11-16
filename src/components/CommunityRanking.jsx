@@ -161,7 +161,9 @@ const CommunityRanking = ({ ranking, selectedCommunities, onItemClick, onReset, 
           borderRadius: '8px',
           padding: '15px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          marginTop: '10px'
+          marginTop: '10px',
+          maxHeight: '400px',
+          overflowY: 'auto'
         }}>
           <div style={{
             display: 'grid',

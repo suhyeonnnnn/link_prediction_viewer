@@ -7,14 +7,19 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
   useEffect(() => {
     if (!svgRef.current || !data.nodes.length) return;
 
-    const width = svgRef.current.clientWidth;
-    const height = svgRef.current.clientHeight;
+    const containerWidth = svgRef.current.clientWidth;
+    const containerHeight = svgRef.current.clientHeight;
+    
+    // Add padding to prevent nodes from being cut off
+    const padding = 40;
+    const width = containerWidth - (padding * 2);
+    const height = containerHeight - (padding * 2);
 
     d3.select(svgRef.current).selectAll('*').remove();
 
     const svg = d3.select(svgRef.current)
-      .attr('width', width)
-      .attr('height', height);
+      .attr('width', containerWidth)
+      .attr('height', containerHeight);
 
     // Tooltip 생성
     const tooltip = d3.select('body').append('div')
@@ -31,12 +36,13 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
       .style('z-index', '1000')
       .style('box-shadow', '0 4px 12px rgba(0,0,0,0.3)');
 
-    const g = svg.append('g');
+    const g = svg.append('g')
+      .attr('transform', `translate(${padding}, ${padding})`);
 
     const zoom = d3.zoom()
       .scaleExtent([0.3, 3])
       .on('zoom', (event) => {
-        g.attr('transform', event.transform);
+        g.attr('transform', `translate(${padding + event.transform.x}, ${padding + event.transform.y}) scale(${event.transform.k})`);
       });
     
     svg.call(zoom);
