@@ -260,3 +260,82 @@ export const filterFormattedByCommunity = (formattedData, communityId) => {
   
   return filtered.map((pair, index) => ({ ...pair, rank: index + 1 }));
 };
+
+// Calculate comprehensive community pair rankings with both predicted and previous data
+export const getCommunityPairRankingWithComparison = (predictedData, previousData, weightMode = 'count') => {
+  const predictedStats = {};
+  const previousStats = {};
+  
+  // Calculate predicted stats
+  predictedData.forEach(row => {
+    const c1 = row.c1_community;
+    const c2 = row.c2_community;
+    
+    if (c1 !== c2) {
+      const pairKey = [c1, c2].sort().join('|||');
+      
+      if (!predictedStats[pairKey]) {
+        predictedStats[pairKey] = {
+          community1: c1 < c2 ? c1 : c2,
+          community2: c1 < c2 ? c2 : c1,
+          count: 0,
+          total_strength: 0
+        };
+      }
+      
+      predictedStats[pairKey].count += 1;
+      predictedStats[pairKey].total_strength += row.pred;
+    }
+  });
+  
+  // Calculate previous stats
+  previousData.forEach(row => {
+    const c1 = row.c1_community;
+    const c2 = row.c2_community;
+    
+    if (c1 !== c2) {
+      const pairKey = [c1, c2].sort().join('|||');
+      
+      if (!previousStats[pairKey]) {
+        previousStats[pairKey] = {
+          community1: c1 < c2 ? c1 : c2,
+          community2: c1 < c2 ? c2 : c1,
+          count: 0
+        };
+      }
+      
+      previousStats[pairKey].count += 1;
+    }
+  });
+  
+  const totalPredicted = predictedData.length;
+  const totalPrevious = previousData.length;
+  
+  // Combine stats
+  const allPairKeys = new Set([...Object.keys(predictedStats), ...Object.keys(previousStats)]);
+  
+  const ranking = Array.from(allPairKeys).map(pairKey => {
+    const predicted = predictedStats[pairKey] || { count: 0, total_strength: 0 };
+    const previous = previousStats[pairKey] || { count: 0 };
+    
+    const [comm1, comm2] = pairKey.split('|||');
+    
+    const predictedConcentration = (predicted.count / totalPredicted) * 100;
+    const previousConcentration = (previous.count / totalPrevious) * 100;
+    const rise = predictedConcentration - previousConcentration;
+    
+    return {
+      community1: comm1,
+      community2: comm2,
+      predicted_count: predicted.count,
+      previous_count: previous.count,
+      predicted_concentration: parseFloat(predictedConcentration.toFixed(2)),
+      previous_concentration: parseFloat(previousConcentration.toFixed(2)),
+      rise: parseFloat(rise.toFixed(2)),
+      total_strength: parseFloat(predicted.total_strength.toFixed(3)),
+      avg_strength: predicted.count > 0 ? parseFloat((predicted.total_strength / predicted.count).toFixed(3)) : 0
+    };
+  });
+  
+  return ranking;
+};

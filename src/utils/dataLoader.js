@@ -38,13 +38,15 @@ export const loadJSON = async (filename) => {
   }
 };
 
-export const loadAllData = async () => {
+export const loadAllData = async (dataSource = 'ft50') => {
   try {
-    console.log('📥 Loading data files...');
+    console.log(`📥 Loading data files... (source: ${dataSource})`);
+    
+    const suffix = dataSource === 'service' ? '_service' : '_ft50';
     
     const [csvData, previousData, childRelations] = await Promise.all([
-      loadCSV('top_predicted_pairs.csv'),
-      loadCSV('previous_concept_pairs.csv'),
+      loadCSV(`top_predicted_pairs${suffix}.csv`),
+      loadCSV(`previous_concept_pairs${suffix}.csv`),
       loadJSON('child_relationships.json')
     ]);
     

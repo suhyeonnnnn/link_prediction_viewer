@@ -3,6 +3,7 @@ import { loadAllData } from './utils/dataLoader';
 import {
   getTopPredictedPairs,
   getCommunityPairRanking,
+  getCommunityPairRankingWithComparison,
   filterByCommunityPairClick,
   filterByCommunity,
   getConceptCommunitiesNetwork,
@@ -16,6 +17,7 @@ import IntroPage from './components/IntroPage';
 
 const App = () => {
   const [showIntro, setShowIntro] = useState(true);
+  const [dataSource, setDataSource] = useState('ft50'); // 'ft50' or 'service'
   const [rawData, setRawData] = useState([]);
   const [previousData, setPreviousData] = useState([]);
   const [childRelations, setChildRelations] = useState({});
@@ -33,6 +35,7 @@ const App = () => {
   const [showPreviousNetwork, setShowPreviousNetwork] = useState(false);
   const [hideBottomNodes, setHideBottomNodes] = useState(0);
   const [topPredictedPairs, setTopPredictedPairs] = useState([]);
+  const [rankingMode, setRankingMode] = useState('predicted'); // 'predicted' or 'rising'
   
   // Year filter states
   const [yearFilter, setYearFilter] = useState('all');
@@ -43,7 +46,7 @@ const App = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const { csvData, previousData: prevData, childRelations: relations } = await loadAllData();
+        const { csvData, previousData: prevData, childRelations: relations } = await loadAllData(dataSource);
         
         setRawData(csvData);
         setPreviousData(prevData);
@@ -61,7 +64,7 @@ const App = () => {
     };
 
     loadData();
-  }, []);
+  }, [dataSource]);
 
   // Extract all unique communities and create fixed color mapping
   const communityColorMap = useMemo(() => {
@@ -157,6 +160,7 @@ const App = () => {
 
   const communityRanking = useMemo(() => {
     if (!networkFilteredData || networkFilteredData.length === 0) return [];
+    if (!previousData || previousData.length === 0) return [];
     
     const dataForRanking = networkFilteredData.map(pair => ({
       c1_community: pair.community1,
@@ -166,8 +170,33 @@ const App = () => {
       pred: pair.prediction_score
     }));
     
-    return getCommunityPairRanking(dataForRanking, Infinity, weightMode);
-  }, [networkFilteredData, weightMode]);
+    const previousDataForRanking = previousData.map(row => ({
+      c1_community: row.c1_community,
+      c2_community: row.c2_community
+    }));
+    
+    // Get comprehensive ranking with comparison
+    const fullRanking = getCommunityPairRankingWithComparison(
+      dataForRanking, 
+      previousDataForRanking, 
+      weightMode
+    );
+    
+    // Sort based on ranking mode
+    let sorted;
+    if (rankingMode === 'rising') {
+      sorted = [...fullRanking].sort((a, b) => b.rise - a.rise);
+    } else {
+      // predicted mode - sort by predicted count
+      sorted = [...fullRanking].sort((a, b) => b.predicted_count - a.predicted_count);
+    }
+    
+    // Add rank and return top items
+    return sorted.slice(0, 20).map((item, index) => ({
+      ...item,
+      rank: index + 1
+    }));
+  }, [networkFilteredData, previousData, weightMode, rankingMode]);
 
   const handleToggleExpand = React.useCallback((pair) => {
     const newExpanded = new Map(expandedPairs);
@@ -303,8 +332,66 @@ const App = () => {
         >
           Service Research Forecast
         </span>
-        <div style={{ fontSize: '14px', fontWeight: 'normal', opacity: 0.8 }}>
-          Predicted: {rawData.length} | Previous: {previousData.length} | Network: {networkFilteredData.length} pairs, {networkData.nodes.length} communities
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          {/* Data Source Toggle */}
+          <div style={{
+            display: 'flex',
+            gap: '0',
+            border: '3px solid #ffffff',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            background: '#1a252f',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+          }}>
+            <button
+              onClick={() => setDataSource('ft50')}
+              style={{
+                padding: '10px 24px',
+                border: 'none',
+                fontSize: '15px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                background: dataSource === 'ft50' ? '#3498db' : '#1a252f',
+                color: 'white',
+                transition: 'all 0.2s ease',
+                borderRight: '2px solid #2c3e50',
+                letterSpacing: '0.5px'
+              }}
+              onMouseEnter={(e) => {
+                if (dataSource !== 'ft50') e.target.style.background = '#2c3e50';
+              }}
+              onMouseLeave={(e) => {
+                if (dataSource !== 'ft50') e.target.style.background = '#1a252f';
+              }}
+            >
+              FT50 Data
+            </button>
+            <button
+              onClick={() => setDataSource('service')}
+              style={{
+                padding: '10px 24px',
+                border: 'none',
+                fontSize: '15px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                background: dataSource === 'service' ? '#e74c3c' : '#1a252f',
+                color: 'white',
+                transition: 'all 0.2s ease',
+                letterSpacing: '0.5px'
+              }}
+              onMouseEnter={(e) => {
+                if (dataSource !== 'service') e.target.style.background = '#2c3e50';
+              }}
+              onMouseLeave={(e) => {
+                if (dataSource !== 'service') e.target.style.background = '#1a252f';
+              }}
+            >
+              Service Data
+            </button>
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: 'normal', opacity: 0.8 }}>
+            Predicted: {rawData.length} | Previous: {previousData.length} | Network: {networkFilteredData.length} pairs, {networkData.nodes.length} communities
+          </div>
         </div>
       </div>
 
@@ -349,7 +436,7 @@ const App = () => {
                     fontWeight: '700',
                     textShadow: '0 1px 2px rgba(0,0,0,0.2)'
                   }}>
-                    🔍 FILTERED
+                    FILTERED
                   </span>
                   <div style={{
                     background: 'rgba(255,255,255,0.2)',
@@ -439,9 +526,10 @@ const App = () => {
                 <div style={{
                   display: 'flex',
                   gap: '0',
-                  border: '1px solid #ddd',
+                  border: '2px solid #bdc3c7',
                   borderRadius: '6px',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  background: 'white'
                 }}>
                   <button
                     onClick={() => {
@@ -449,33 +537,45 @@ const App = () => {
                       setYearFilter('all');
                     }}
                     style={{
-                      padding: '6px 12px',
+                      padding: '8px 14px',
                       border: 'none',
                       fontSize: '13px',
+                      fontWeight: '600',
                       cursor: 'pointer',
                       background: !showPreviousNetwork ? '#3498db' : 'white',
                       color: !showPreviousNetwork ? 'white' : '#7f8c8d',
-                      fontWeight: !showPreviousNetwork ? '600' : 'normal',
                       transition: 'all 0.2s ease',
-                      borderRight: '1px solid #ddd'
+                      borderRight: '1px solid #bdc3c7'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (showPreviousNetwork) e.target.style.background = '#ecf0f1';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (showPreviousNetwork) e.target.style.background = 'white';
                     }}
                   >
-                    📈 Predicted
+                    Predicted
                   </button>
                   <button
                     onClick={() => setShowPreviousNetwork(true)}
                     style={{
-                      padding: '6px 12px',
+                      padding: '8px 14px',
                       border: 'none',
                       fontSize: '13px',
+                      fontWeight: '600',
                       cursor: 'pointer',
                       background: showPreviousNetwork ? '#27ae60' : 'white',
                       color: showPreviousNetwork ? 'white' : '#7f8c8d',
-                      fontWeight: showPreviousNetwork ? '600' : 'normal',
                       transition: 'all 0.2s ease'
                     }}
+                    onMouseEnter={(e) => {
+                      if (!showPreviousNetwork) e.target.style.background = '#ecf0f1';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!showPreviousNetwork) e.target.style.background = 'white';
+                    }}
                   >
-                    📊 Previous
+                    Previous
                   </button>
                 </div>
                 
@@ -485,12 +585,14 @@ const App = () => {
                     value={yearFilter}
                     onChange={(e) => setYearFilter(e.target.value)}
                     style={{
-                      padding: '6px 10px',
+                      padding: '8px 12px',
                       borderRadius: '6px',
-                      border: '1px solid #ddd',
+                      border: '2px solid #bdc3c7',
                       fontSize: '13px',
+                      fontWeight: '600',
                       cursor: 'pointer',
-                      background: 'white'
+                      background: 'white',
+                      color: '#2c3e50'
                     }}
                   >
                     <option value="all">All Years</option>
@@ -510,15 +612,17 @@ const App = () => {
                       min="2000"
                       max="2024"
                       style={{
-                        width: '65px',
-                        padding: '6px 8px',
+                        width: '70px',
+                        padding: '8px 10px',
                         borderRadius: '6px',
-                        border: '1px solid #ddd',
-                        fontSize: '13px'
+                        border: '2px solid #bdc3c7',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        color: '#2c3e50'
                       }}
                       placeholder="Start"
                     />
-                    <span style={{ color: '#7f8c8d', fontSize: '13px' }}>-</span>
+                    <span style={{ color: '#7f8c8d', fontSize: '13px', fontWeight: '600' }}>-</span>
                     <input
                       type="number"
                       value={customEndYear}
@@ -526,11 +630,13 @@ const App = () => {
                       min="2000"
                       max="2024"
                       style={{
-                        width: '65px',
-                        padding: '6px 8px',
+                        width: '70px',
+                        padding: '8px 10px',
                         borderRadius: '6px',
-                        border: '1px solid #ddd',
-                        fontSize: '13px'
+                        border: '2px solid #bdc3c7',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        color: '#2c3e50'
                       }}
                       placeholder="End"
                     />
@@ -558,12 +664,14 @@ const App = () => {
                         }
                       }}
                       style={{
-                        padding: '6px 10px',
+                        padding: '8px 12px',
                         borderRadius: '6px',
-                        border: '1px solid #ddd',
+                        border: '2px solid #bdc3c7',
                         fontSize: '13px',
+                        fontWeight: '600',
                         cursor: 'pointer',
-                        background: 'white'
+                        background: 'white',
+                        color: '#2c3e50'
                       }}
                     >
                       <option value="1000">Top 1000</option>
@@ -585,11 +693,13 @@ const App = () => {
                         min="1"
                         max={rawData.length}
                         style={{
-                          width: '80px',
-                          padding: '6px 8px',
+                          width: '90px',
+                          padding: '8px 10px',
                           borderRadius: '6px',
-                          border: '1px solid #ddd',
-                          fontSize: '13px'
+                          border: '2px solid #bdc3c7',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: '#2c3e50'
                         }}
                         placeholder="Top N"
                       />
@@ -602,12 +712,14 @@ const App = () => {
                   value={hideBottomNodes}
                   onChange={(e) => setHideBottomNodes(Number(e.target.value))}
                   style={{
-                    padding: '6px 10px',
+                    padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #ddd',
+                    border: '2px solid #bdc3c7',
                     fontSize: '13px',
+                    fontWeight: '600',
                     cursor: 'pointer',
-                    background: 'white'
+                    background: 'white',
+                    color: '#2c3e50'
                   }}
                   title="Hide communities with fewest pairs"
                 >
@@ -635,7 +747,8 @@ const App = () => {
             selectedCommunities={selectedCommunities}
             onItemClick={handleCommunityPairClick}
             onReset={handleReset}
-            weightMode={weightMode}
+            rankingMode={rankingMode}
+            onRankingModeChange={setRankingMode}
           />
         </div>
       </div>

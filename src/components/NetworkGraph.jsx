@@ -75,6 +75,14 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
       return minWidth + normalized * (maxWidth - minWidth);
     };
 
+    // Helper function to check if a link is the selected/highlighted link
+    const isHighlightedLink = (link) => {
+      if (highlightedNodes.length !== 2) return false;
+      const sourceId = link.source.id || link.source;
+      const targetId = link.target.id || link.target;
+      return (highlightedNodes.includes(sourceId) && highlightedNodes.includes(targetId));
+    };
+
     // Force simulation with adjusted parameters
     const simulation = d3.forceSimulation(filteredNodes)
       .force('link', d3.forceLink(filteredLinks).id(d => d.id).distance(150))
@@ -88,6 +96,11 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
       .data(filteredLinks)
       .join('line')
       .attr('stroke', d => {
+        // If this link is highlighted, use highlight color
+        if (isHighlightedLink(d)) {
+          return '#2ecc71';
+        }
+        // Otherwise use weight-based color
         if (d.weight >= weightThreshold) {
           return '#555';
         } else {
@@ -95,6 +108,15 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
         }
       })
       .attr('stroke-opacity', d => {
+        // If this link is highlighted, high opacity
+        if (isHighlightedLink(d)) {
+          return 0.9;
+        }
+        // If we're in filter mode but this link is not highlighted, dim it
+        if (highlightedNodes.length === 2) {
+          return 0.1;
+        }
+        // Normal mode: opacity based on weight
         if (d.weight >= weightThreshold) {
           const normalized = (d.weight - weightThreshold) / (maxWeight - weightThreshold);
           return 0.5 + normalized * 0.4;
@@ -102,7 +124,13 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
           return 0.15;
         }
       })
-      .attr('stroke-width', d => getStrokeWidth(d.weight))
+      .attr('stroke-width', d => {
+        // If this link is highlighted, make it thicker
+        if (isHighlightedLink(d)) {
+          return 6;
+        }
+        return getStrokeWidth(d.weight);
+      })
       .style('cursor', 'pointer')
       .on('click', (event, d) => {
         event.stopPropagation();
@@ -160,16 +188,29 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
         
         tooltip.style('visibility', 'hidden');
         
-        link
-          .attr('stroke', d.weight >= weightThreshold ? '#555' : '#ddd')
-          .attr('stroke-width', getStrokeWidth(d.weight))
-          .attr('stroke-opacity', d => {
-            if (d.weight >= weightThreshold) {
-              const normalized = (d.weight - weightThreshold) / (maxWeight - weightThreshold);
-              return 0.4 + normalized * 0.4;
-            }
-            return 0.1;
-          });
+        // Restore highlighted or normal state
+        if (isHighlightedLink(d)) {
+          link
+            .attr('stroke', '#2ecc71')
+            .attr('stroke-width', 6)
+            .attr('stroke-opacity', 0.9);
+        } else {
+          link
+            .attr('stroke', d.weight >= weightThreshold ? '#555' : '#ddd')
+            .attr('stroke-width', getStrokeWidth(d.weight))
+            .attr('stroke-opacity', () => {
+              // If in filter mode, dim non-highlighted links
+              if (highlightedNodes.length === 2) {
+                return 0.1;
+              }
+              // Normal mode
+              if (d.weight >= weightThreshold) {
+                const normalized = (d.weight - weightThreshold) / (maxWeight - weightThreshold);
+                return 0.5 + normalized * 0.4;
+              }
+              return 0.15;
+            });
+        }
         
         node.selectAll('circle')
           .attr('stroke-width', d => highlightedNodes.includes(d.id) ? 3 : 2)
