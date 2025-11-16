@@ -39,6 +39,10 @@ const App = () => {
   const [topPredictedPairs, setTopPredictedPairs] = useState([]);
   const [rankingMode, setRankingMode] = useState('predicted'); // 'predicted' or 'rising'
   
+  // Resizable panel widths
+  const [leftPanelWidth, setLeftPanelWidth] = useState(50); // percentage
+  const [topRightHeight, setTopRightHeight] = useState(66); // percentage of right panel
+  
   // Year filter states
   const [yearFilter, setYearFilter] = useState('all');
   const [customStartYear, setCustomStartYear] = useState(2000);
@@ -293,6 +297,68 @@ const App = () => {
     setMatrixCategory(null);
   };
 
+  // Horizontal resizer (left-right panels)
+  const handleHorizontalResize = React.useCallback((e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = leftPanelWidth;
+    
+    const onMouseMove = (moveEvent) => {
+      const container = document.querySelector('[data-main-container]');
+      if (!container) return;
+      
+      const containerRect = container.getBoundingClientRect();
+      const deltaX = moveEvent.clientX - startX;
+      const deltaPercent = (deltaX / containerRect.width) * 100;
+      const newWidth = Math.min(Math.max(startWidth + deltaPercent, 30), 70);
+      
+      setLeftPanelWidth(newWidth);
+    };
+    
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
+    };
+    
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [leftPanelWidth]);
+
+  // Vertical resizer (top-bottom in right panel)
+  const handleVerticalResize = React.useCallback((e) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = topRightHeight;
+    
+    const onMouseMove = (moveEvent) => {
+      const container = document.querySelector('[data-right-panel]');
+      if (!container) return;
+      
+      const containerRect = container.getBoundingClientRect();
+      const deltaY = moveEvent.clientY - startY;
+      const deltaPercent = (deltaY / containerRect.height) * 100;
+      const newHeight = Math.min(Math.max(startHeight + deltaPercent, 40), 80);
+      
+      setTopRightHeight(newHeight);
+    };
+    
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
+    };
+    
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+  }, [topRightHeight]);
+
   if (showIntro) {
     return <IntroPage onEnter={() => setShowIntro(false)} />;
   }
@@ -453,15 +519,17 @@ const App = () => {
         </div>
       </div>
 
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        gap: '15px',
-        padding: '15px',
-        overflow: 'hidden',
-        alignItems: 'flex-start'
-      }}>
-        <div style={{ width: '50%', display: 'flex', flexDirection: 'column', gap: '10px', height: '100%' }}>
+      <div 
+        data-main-container
+        style={{
+          flex: 1,
+          display: 'flex',
+          gap: '0',
+          padding: '15px',
+          overflow: 'hidden',
+          alignItems: 'flex-start'
+        }}>
+        <div style={{ width: `${leftPanelWidth}%`, display: 'flex', flexDirection: 'column', gap: '10px', height: '100%' }}>
           <div style={{
             background: 'white',
             borderRadius: '8px',
@@ -569,9 +637,37 @@ const App = () => {
           />
         </div>
 
-        <div style={{ width: '50%', display: 'flex', flexDirection: 'column', gap: '15px', height: '100%' }}>
+        {/* Horizontal Resizer */}
+        <div
+          onMouseDown={handleHorizontalResize}
+          style={{
+            width: '8px',
+            cursor: 'col-resize',
+            background: 'transparent',
+            position: 'relative',
+            flexShrink: 0,
+            margin: '0 4px'
+          }}
+        >
           <div style={{
-            flex: 2,
+            position: 'absolute',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '4px',
+            height: '60px',
+            background: '#bdc3c7',
+            borderRadius: '2px',
+            transition: 'background 0.2s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = '#3498db'}
+          onMouseLeave={(e) => e.currentTarget.style.background = '#bdc3c7'}
+          />
+        </div>
+
+        <div data-right-panel style={{ width: `${100 - leftPanelWidth}%`, display: 'flex', flexDirection: 'column', gap: '0', height: '100%' }}>
+          <div style={{
+            height: `${topRightHeight}%`,
             background: 'white',
             borderRadius: '8px',
             padding: '15px',
@@ -811,15 +907,45 @@ const App = () => {
             />
           </div>
 
-          <CommunityRanking
-            ranking={communityRanking}
-            selectedCommunities={selectedCommunities}
-            onItemClick={handleCommunityPairClick}
-            onReset={handleReset}
-            rankingMode={rankingMode}
-            onRankingModeChange={setRankingMode}
-            onMatrixCategoryClick={handleMatrixCategoryClick}
-          />
+          {/* Vertical Resizer */}
+          <div
+            onMouseDown={handleVerticalResize}
+            style={{
+              height: '8px',
+              cursor: 'row-resize',
+              background: 'transparent',
+              position: 'relative',
+              flexShrink: 0,
+              margin: '4px 0'
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '60px',
+              height: '4px',
+              background: '#bdc3c7',
+              borderRadius: '2px',
+              transition: 'background 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#3498db'}
+            onMouseLeave={(e) => e.currentTarget.style.background = '#bdc3c7'}
+            />
+          </div>
+
+          <div style={{ height: `${100 - topRightHeight}%`, display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <CommunityRanking
+              ranking={communityRanking}
+              selectedCommunities={selectedCommunities}
+              onItemClick={handleCommunityPairClick}
+              onReset={handleReset}
+              rankingMode={rankingMode}
+              onRankingModeChange={setRankingMode}
+              onMatrixCategoryClick={handleMatrixCategoryClick}
+            />
+          </div>
         </div>
       </div>
       
