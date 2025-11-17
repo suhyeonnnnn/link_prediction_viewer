@@ -130,6 +130,28 @@ const CommunityRanking = ({ ranking, selectedCommunities, onItemClick, onReset, 
               Predicted Strength
             </button>
             <button
+              onClick={() => onRankingModeChange('previous')}
+              style={{
+                padding: '6px 12px',
+                border: 'none',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                background: rankingMode === 'previous' ? '#27ae60' : 'white',
+                color: rankingMode === 'previous' ? 'white' : '#7f8c8d',
+                transition: 'all 0.2s ease',
+                borderRight: '1px solid #bdc3c7'
+              }}
+              onMouseEnter={(e) => {
+                if (rankingMode !== 'previous') e.target.style.background = '#ecf0f1';
+              }}
+              onMouseLeave={(e) => {
+                if (rankingMode !== 'previous') e.target.style.background = 'white';
+              }}
+            >
+              Previous Strength
+            </button>
+            <button
               onClick={() => onRankingModeChange('rising')}
               style={{
                 padding: '6px 12px',
@@ -479,6 +501,18 @@ const CommunityRanking = ({ ranking, selectedCommunities, onItemClick, onReset, 
                         | <span style={{ fontWeight: '600' }}>Prev:</span> {item.previous_count} pairs ({item.previous_concentration}%)
                       </span>
                     )}
+                  </div>
+                </div>
+              ) : rankingMode === 'previous' ? (
+                <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                    <span style={{ fontWeight: '600' }}>Previous Rank: #{item.rank}</span>
+                  </div>
+                  <div>
+                    <span style={{ fontWeight: '600' }}>Prev:</span> {item.previous_count} pairs ({item.previous_concentration}%)
+                    <span style={{ marginLeft: '8px' }}>
+                      | <span style={{ fontWeight: '600' }}>Pred:</span> {item.predicted_count} pairs ({item.predicted_concentration}%)
+                    </span>
                   </div>
                 </div>
               ) : (

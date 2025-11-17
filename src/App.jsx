@@ -165,10 +165,13 @@ const App = () => {
   }, [networkFilteredData, weightMode]);
 
   const communityRanking = useMemo(() => {
-    if (!networkFilteredData || networkFilteredData.length === 0) return [];
+    if (!rawData || rawData.length === 0) return [];
     if (!previousData || previousData.length === 0) return [];
     
-    const dataForRanking = networkFilteredData.map(pair => ({
+    // Always use rawData (predicted) for ranking, regardless of network view
+    const topPredictedData = getTopPredictedPairs(rawData, topN);
+    
+    const dataForRanking = topPredictedData.map(pair => ({
       c1_community: pair.community1,
       c2_community: pair.community2,
       concept1: pair.concept1,
@@ -206,6 +209,11 @@ const App = () => {
     let sorted;
     if (rankingMode === 'rising') {
       sorted = [...fullRanking].sort((a, b) => b.rise - a.rise);
+    } else if (rankingMode === 'previous') {
+      // Sort by previous count
+      sorted = [...fullRanking]
+        .filter(item => item.previous_count > 0)
+        .sort((a, b) => b.previous_count - a.previous_count);
     } else {
       // predicted mode - sort by predicted count
       sorted = [...fullRanking].sort((a, b) => b.predicted_count - a.predicted_count);
@@ -229,7 +237,7 @@ const App = () => {
         rankChange: rankChange
       };
     });
-  }, [networkFilteredData, previousData, weightMode, rankingMode]);
+  }, [rawData, previousData, topN, weightMode, rankingMode]);
 
   const handleToggleExpand = React.useCallback((pair) => {
     const newExpanded = new Map(expandedPairs);
