@@ -168,9 +168,12 @@ const App = () => {
     if (!rawData || rawData.length === 0) return [];
     if (!previousData || previousData.length === 0) return [];
     
-    // Always use rawData (predicted) for ranking, regardless of network view
+    // 1. Get top N predicted pairs for concentration calculation
     const topPredictedData = getTopPredictedPairs(rawData, topN);
+    console.log('🔍 topN:', topN);
+    console.log('🔍 topPredictedData length:', topPredictedData.length);
     
+    // Data for ranking (only top N)
     const dataForRanking = topPredictedData.map(pair => ({
       c1_community: pair.community1,
       c2_community: pair.community2,
@@ -179,17 +182,26 @@ const App = () => {
       pred: pair.prediction_score
     }));
     
+    console.log('🔍 dataForRanking length:', dataForRanking.length);
+    
+    // 2. Get all previous data
     const previousDataForRanking = previousData.map(row => ({
       c1_community: row.c1_community,
       c2_community: row.c2_community
     }));
     
-    // Get comprehensive ranking with comparison
+    console.log('🔍 previousDataForRanking length:', previousDataForRanking.length);
+    
+    // 3. Combine: Get comprehensive ranking with comparison
+    //    This will include all community pairs from both topN and previous
     const fullRanking = getCommunityPairRankingWithComparison(
-      dataForRanking, 
-      previousDataForRanking, 
+      dataForRanking,  // topN predicted pairs
+      previousDataForRanking,  // all previous pairs
       weightMode
     );
+    
+    console.log('🔍 fullRanking length:', fullRanking.length);
+    console.log('🔍 fullRanking sample:', fullRanking.slice(0, 3));
     
     // Calculate previous ranking (sort by previous_count)
     const previousRanking = [...fullRanking]
@@ -220,7 +232,7 @@ const App = () => {
     }
     
     // Add rank and previous rank
-    return sorted.map((item, index) => {
+    const rankedData = sorted.map((item, index) => {
       const pairKey = `${item.community1}|||${item.community2}`;
       const previousRank = previousRankMap[pairKey];
       const currentRank = index + 1;
@@ -237,6 +249,8 @@ const App = () => {
         rankChange: rankChange
       };
     });
+    
+    return { ranked: rankedData, full: fullRanking };
   }, [rawData, previousData, topN, weightMode, rankingMode]);
 
   const handleToggleExpand = React.useCallback((pair) => {
@@ -945,7 +959,8 @@ const App = () => {
 
           <div style={{ height: `${100 - topRightHeight}%`, display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <CommunityRanking
-              ranking={communityRanking}
+              ranking={communityRanking.ranked}
+              fullRanking={communityRanking.full}
               selectedCommunities={selectedCommunities}
               onItemClick={handleCommunityPairClick}
               onReset={handleReset}

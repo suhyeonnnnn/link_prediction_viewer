@@ -6,18 +6,18 @@ export const getTopPredictedPairs = (data, topN = 10) => {
     rank: index + 1,
     concept1: row.concept1,
     concept2: row.concept2,
-    prediction_score: parseFloat(row.pred.toFixed(3)),
+    prediction_score: row.pred,  // No rounding
     concept1_freq: row.concept1_freq,
     concept2_freq: row.concept2_freq,
     concept1_field: row.concept1_top1_field,
-    concept1_field_ratio: parseFloat(row.concept1_top1_ratio.toFixed(1)),
+    concept1_field_ratio: row.concept1_top1_ratio,  // No rounding
     concept2_field: row.concept2_top1_field,
-    concept2_field_ratio: parseFloat(row.concept2_top1_ratio.toFixed(1)),
+    concept2_field_ratio: row.concept2_top1_ratio,  // No rounding
     community1: row.c1_community,
     community2: row.c2_community,
     display_text: `${row.concept1} <-> ${row.concept2}`,
     freq_text: `${row.concept1_freq} <-> ${row.concept2_freq}`,
-    field_text: `${row.concept1_top1_field}(${row.concept1_top1_ratio.toFixed(1)}) <-> ${row.concept2_top1_field}(${row.concept2_top1_ratio.toFixed(1)})`,
+    field_text: `${row.concept1_top1_field}(${row.concept1_top1_ratio.toFixed(1)}) <-> ${row.concept2_top1_field}(${row.concept2_top1_ratio.toFixed(1)})`,  // Display only
     community_text: `${row.c1_community} <-> ${row.c2_community}`
   }));
 };
@@ -55,9 +55,9 @@ export const getCommunityPairRanking = (data, topN = 10, weightMode = 'count') =
     .map(stats => ({
       community1: stats.community1,
       community2: stats.community2,
-      connection_strength: parseFloat((stats.total_strength / stats.pairs.length).toFixed(3)),
+      connection_strength: stats.total_strength / stats.pairs.length,  // No rounding
       pair_count: stats.pairs.length,
-      total_pred_sum: parseFloat(stats.total_strength.toFixed(3)),
+      total_pred_sum: stats.total_strength,  // No rounding
       display_text: `${stats.community1} <-> ${stats.community2}`,
       top_pair: stats.pairs.reduce((max, pair) => 
         pair.pred_score > max.pred_score ? pair : max, stats.pairs[0]
@@ -91,18 +91,18 @@ export const filterByCommunityPairClick = (data, community1, community2, topN = 
     rank: index + 1,
     concept1: row.concept1,
     concept2: row.concept2,
-    prediction_score: parseFloat(row.pred.toFixed(3)),
+    prediction_score: row.pred,  // No rounding
     concept1_freq: row.concept1_freq,
     concept2_freq: row.concept2_freq,
     concept1_field: row.concept1_top1_field,
-    concept1_field_ratio: parseFloat(row.concept1_top1_ratio.toFixed(1)),
+    concept1_field_ratio: row.concept1_top1_ratio,  // No rounding
     concept2_field: row.concept2_top1_field,
-    concept2_field_ratio: parseFloat(row.concept2_top1_ratio.toFixed(1)),
+    concept2_field_ratio: row.concept2_top1_ratio,  // No rounding
     community1: row.c1_community,
     community2: row.c2_community,
     display_text: `${row.concept1} <-> ${row.concept2}`,
     freq_text: `${row.concept1_freq} <-> ${row.concept2_freq}`,
-    field_text: `${row.concept1_top1_field}(${row.concept1_top1_ratio.toFixed(1)}) <-> ${row.concept2_top1_field}(${row.concept2_top1_ratio.toFixed(1)})`,
+    field_text: `${row.concept1_top1_field}(${row.concept1_top1_ratio.toFixed(1)}) <-> ${row.concept2_top1_field}(${row.concept2_top1_ratio.toFixed(1)})`,  // Display only
     community_text: `${row.c1_community} <-> ${row.c2_community}`
   }));
 };
@@ -197,7 +197,7 @@ export const getConceptCommunitiesNetwork = (data, weightMode = 'count') => {
     
     // weightMode에 따라 weight 결정
     const weight = weightMode === 'weighted' 
-      ? parseFloat(value.predSum.toFixed(3))
+      ? value.predSum  // No rounding
       : value.count;
     
     return {
@@ -205,7 +205,7 @@ export const getConceptCommunitiesNetwork = (data, weightMode = 'count') => {
       target,
       weight,
       count: value.count,
-      predSum: parseFloat(value.predSum.toFixed(3))
+      predSum: value.predSum  // No rounding
     };
   });
   
@@ -224,18 +224,18 @@ export const filterByCommunity = (data, communityId, topN = 20) => {
     rank: index + 1,
     concept1: row.concept1,
     concept2: row.concept2,
-    prediction_score: parseFloat(row.pred.toFixed(3)),
+    prediction_score: row.pred,  // No rounding
     concept1_freq: row.concept1_freq,
     concept2_freq: row.concept2_freq,
     concept1_field: row.concept1_top1_field,
-    concept1_field_ratio: parseFloat(row.concept1_top1_ratio.toFixed(1)),
+    concept1_field_ratio: row.concept1_top1_ratio,  // No rounding
     concept2_field: row.concept2_top1_field,
-    concept2_field_ratio: parseFloat(row.concept2_top1_ratio.toFixed(1)),
+    concept2_field_ratio: row.concept2_top1_ratio,  // No rounding
     community1: row.c1_community,
     community2: row.c2_community,
     display_text: `${row.concept1} <-> ${row.concept2}`,
     freq_text: `${row.concept1_freq} <-> ${row.concept2_freq}`,
-    field_text: `${row.concept1_top1_field}(${row.concept1_top1_ratio.toFixed(1)}) <-> ${row.concept2_top1_field}(${row.concept2_top1_ratio.toFixed(1)})`,
+    field_text: `${row.concept1_top1_field}(${row.concept1_top1_ratio.toFixed(1)}) <-> ${row.concept2_top1_field}(${row.concept2_top1_ratio.toFixed(1)})`,  // Display only
     community_text: `${row.c1_community} <-> ${row.c2_community}`
   }));
 };
@@ -266,53 +266,61 @@ export const getCommunityPairRankingWithComparison = (predictedData, previousDat
   const predictedStats = {};
   const previousStats = {};
   
+  console.log('📊 getCommunityPairRankingWithComparison called');
+  console.log('📊 predictedData length:', predictedData.length);
+  console.log('📊 previousData length:', previousData.length);
+  
   // Calculate predicted stats
   predictedData.forEach(row => {
     const c1 = row.c1_community;
     const c2 = row.c2_community;
     
-    if (c1 !== c2) {
-      const pairKey = [c1, c2].sort().join('|||');
-      
-      if (!predictedStats[pairKey]) {
-        predictedStats[pairKey] = {
-          community1: c1 < c2 ? c1 : c2,
-          community2: c1 < c2 ? c2 : c1,
-          count: 0,
-          total_strength: 0
-        };
-      }
-      
-      predictedStats[pairKey].count += 1;
-      predictedStats[pairKey].total_strength += row.pred;
+    // Allow same community pairs (removed c1 !== c2 condition)
+    const pairKey = [c1, c2].sort().join('|||');
+    
+    if (!predictedStats[pairKey]) {
+      predictedStats[pairKey] = {
+        community1: c1 < c2 ? c1 : c2,
+        community2: c1 < c2 ? c2 : c1,
+        count: 0,
+        total_strength: 0
+      };
     }
+    
+    predictedStats[pairKey].count += 1;
+    predictedStats[pairKey].total_strength += row.pred;
   });
+  
+  console.log('📊 predictedStats keys:', Object.keys(predictedStats).length);
   
   // Calculate previous stats
   previousData.forEach(row => {
     const c1 = row.c1_community;
     const c2 = row.c2_community;
     
-    if (c1 !== c2) {
-      const pairKey = [c1, c2].sort().join('|||');
-      
-      if (!previousStats[pairKey]) {
-        previousStats[pairKey] = {
-          community1: c1 < c2 ? c1 : c2,
-          community2: c1 < c2 ? c2 : c1,
-          count: 0
-        };
-      }
-      
-      previousStats[pairKey].count += 1;
+    // Allow same community pairs (removed c1 !== c2 condition)
+    const pairKey = [c1, c2].sort().join('|||');
+    
+    if (!previousStats[pairKey]) {
+      previousStats[pairKey] = {
+        community1: c1 < c2 ? c1 : c2,
+        community2: c1 < c2 ? c2 : c1,
+        count: 0
+      };
     }
+    
+    previousStats[pairKey].count += 1;
   });
+  
+  console.log('📊 previousStats keys:', Object.keys(previousStats).length);
   
   const totalPredicted = predictedData.length;
   const totalPrevious = previousData.length;
   
   // Combine stats
   const allPairKeys = new Set([...Object.keys(predictedStats), ...Object.keys(previousStats)]);
+  
+  console.log('📊 allPairKeys size (union):', allPairKeys.size);
   
   const ranking = Array.from(allPairKeys).map(pairKey => {
     const predicted = predictedStats[pairKey] || { count: 0, total_strength: 0 };
@@ -323,17 +331,18 @@ export const getCommunityPairRankingWithComparison = (predictedData, previousDat
     const predictedConcentration = (predicted.count / totalPredicted) * 100;
     const previousConcentration = (previous.count / totalPrevious) * 100;
     const rise = predictedConcentration - previousConcentration;
+    const avgStrength = predicted.count > 0 ? (predicted.total_strength / predicted.count) : 0;
     
     return {
       community1: comm1,
       community2: comm2,
       predicted_count: predicted.count,
       previous_count: previous.count,
-      predicted_concentration: parseFloat(predictedConcentration.toFixed(2)),
-      previous_concentration: parseFloat(previousConcentration.toFixed(2)),
-      rise: parseFloat(rise.toFixed(2)),
-      total_strength: parseFloat(predicted.total_strength.toFixed(3)),
-      avg_strength: predicted.count > 0 ? parseFloat((predicted.total_strength / predicted.count).toFixed(3)) : 0
+      predicted_concentration: predictedConcentration,  // No rounding
+      previous_concentration: previousConcentration,    // No rounding
+      rise: rise,                                       // No rounding
+      total_strength: predicted.total_strength,         // No rounding
+      avg_strength: avgStrength                         // No rounding
     };
   });
   

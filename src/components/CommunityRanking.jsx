@@ -1,19 +1,33 @@
 import React from 'react';
 
-const CommunityRanking = ({ ranking, selectedCommunities, onItemClick, onReset, rankingMode, onRankingModeChange, onMatrixCategoryClick }) => {
+const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemClick, onReset, rankingMode, onRankingModeChange, onMatrixCategoryClick }) => {
   const [showMatrix, setShowMatrix] = React.useState(false);
   
-  // Calculate median for matrix categorization
+  // Calculate median for matrix categorization - use fullRanking instead of ranking
   const getMatrixCategories = () => {
-    const pairsWithBothData = ranking.filter(item => item.previous_count > 0 && item.predicted_count > 0);
+    const pairsWithBothData = fullRanking.filter(item => item.previous_count >= 0 && item.predicted_count >= 0);
     
     if (pairsWithBothData.length === 0) return null;
     
     const predictedConcentrations = pairsWithBothData.map(item => item.predicted_concentration).sort((a, b) => a - b);
     const previousConcentrations = pairsWithBothData.map(item => item.previous_concentration).sort((a, b) => a - b);
     
-    const predictedMedian = predictedConcentrations[Math.floor(predictedConcentrations.length / 2)];
-    const previousMedian = previousConcentrations[Math.floor(previousConcentrations.length / 2)];
+    // Calculate statistically accurate median
+    const getMedian = (sortedArray) => {
+      const length = sortedArray.length;
+      const mid = Math.floor(length / 2);
+      
+      if (length % 2 === 0) {
+        // Even: average of middle two values
+        return (sortedArray[mid - 1] + sortedArray[mid]) / 2;
+      } else {
+        // Odd: middle value
+        return sortedArray[mid];
+      }
+    };
+    
+    const predictedMedian = getMedian(predictedConcentrations);
+    const previousMedian = getMedian(previousConcentrations);
     
     const categories = {
       'High-High': [],
@@ -243,7 +257,7 @@ const CommunityRanking = ({ ranking, selectedCommunities, onItemClick, onReset, 
                   >
                     {item.community1} ↔ {item.community2}
                     <div style={{ fontSize: '9px', color: '#95a5a6' }}>
-                      P:{item.predicted_concentration}% / Pr:{item.previous_concentration}%
+                      P:{item.predicted_concentration.toFixed(2)}% / Pr:{item.previous_concentration.toFixed(2)}%
                     </div>
                   </div>
                 ))}
@@ -495,10 +509,10 @@ const CommunityRanking = ({ ranking, selectedCommunities, onItemClick, onReset, 
                     )}
                   </div>
                   <div>
-                    <span style={{ fontWeight: '600' }}>Pred:</span> {item.predicted_count} pairs ({item.predicted_concentration}%)
+                    <span style={{ fontWeight: '600' }}>Pred:</span> {item.predicted_count} pairs ({item.predicted_concentration.toFixed(2)}%)
                     {item.previous_count > 0 && (
                       <span style={{ marginLeft: '8px' }}>
-                        | <span style={{ fontWeight: '600' }}>Prev:</span> {item.previous_count} pairs ({item.previous_concentration}%)
+                        | <span style={{ fontWeight: '600' }}>Prev:</span> {item.previous_count} pairs ({item.previous_concentration.toFixed(2)}%)
                       </span>
                     )}
                   </div>
@@ -509,9 +523,9 @@ const CommunityRanking = ({ ranking, selectedCommunities, onItemClick, onReset, 
                     <span style={{ fontWeight: '600' }}>Previous Rank: #{item.rank}</span>
                   </div>
                   <div>
-                    <span style={{ fontWeight: '600' }}>Prev:</span> {item.previous_count} pairs ({item.previous_concentration}%)
+                    <span style={{ fontWeight: '600' }}>Prev:</span> {item.previous_count} pairs ({item.previous_concentration.toFixed(2)}%)
                     <span style={{ marginLeft: '8px' }}>
-                      | <span style={{ fontWeight: '600' }}>Pred:</span> {item.predicted_count} pairs ({item.predicted_concentration}%)
+                      | <span style={{ fontWeight: '600' }}>Pred:</span> {item.predicted_count} pairs ({item.predicted_concentration.toFixed(2)}%)
                     </span>
                   </div>
                 </div>
@@ -523,12 +537,12 @@ const CommunityRanking = ({ ranking, selectedCommunities, onItemClick, onReset, 
                         fontWeight: '700',
                         color: item.rise > 0 ? '#27ae60' : (item.rise < 0 ? '#e74c3c' : '#7f8c8d')
                       }}>
-                        {item.rise > 0 ? '+' : ''}{item.rise}%
+                        {item.rise > 0 ? '+' : ''}{item.rise.toFixed(2)}%
                       </span>
                     </span>
                   </div>
                   <div style={{ color: '#95a5a6', fontSize: '11px', marginTop: '2px' }}>
-                    Pred: {item.predicted_concentration}% ({item.predicted_count}) | Prev: {item.previous_concentration}% ({item.previous_count})
+                    Pred: {item.predicted_concentration.toFixed(2)}% ({item.predicted_count}) | Prev: {item.previous_concentration.toFixed(2)}% ({item.previous_count})
                   </div>
                 </div>
               )}

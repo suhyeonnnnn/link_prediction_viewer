@@ -94,7 +94,7 @@ const ConceptPairItem = ({
       
       {/* Prediction Score - 항상 표시 */}
       <div style={{ fontSize: '13px', color: '#555', fontWeight: '600' }}>
-        Score: {pair.prediction_score}
+        Score: {pair.prediction_score.toFixed(3)}
       </div>
 
       {/* 확장된 상세 정보 */}
@@ -128,7 +128,7 @@ const ConceptPairItem = ({
               </div>
               <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px' }}>
                 <span style={{ marginRight: '4px' }}>🏷️</span>
-                {pair.concept1_field} ({pair.concept1_field_ratio})
+                {pair.concept1_field} ({pair.concept1_field_ratio.toFixed(1)})
               </div>
               <div style={{ 
                 fontSize: '12px', 
@@ -160,7 +160,7 @@ const ConceptPairItem = ({
               </div>
               <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px' }}>
                 <span style={{ marginRight: '4px' }}>🏷️</span>
-                {pair.concept2_field} ({pair.concept2_field_ratio})
+                {pair.concept2_field} ({pair.concept2_field_ratio.toFixed(1)})
               </div>
               <div style={{ 
                 fontSize: '12px', 
