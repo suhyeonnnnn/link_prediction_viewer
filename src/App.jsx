@@ -536,7 +536,7 @@ const App = () => {
             </div>
           </div>
           <div style={{ fontSize: '14px', fontWeight: 'normal', opacity: 0.8 }}>
-            Predicted: {rawData.length} | Previous: {previousData.length} | Network: {networkFilteredData.length} pairs, {networkData.nodes.length} communities
+            Predicted: {rawData.length} | Current: {previousData.length} | Network: {networkFilteredData.length} pairs, {networkData.nodes.length} communities
           </div>
         </div>
       </div>
@@ -608,10 +608,10 @@ const App = () => {
                     }}>
                       {filterMode === 'matrix' ? (
                         <>
-                          {matrixCategory === 'High-High' && 'Core & Persistent'}
-                          {matrixCategory === 'High-Low' && 'Emerging/Rising'}
-                          {matrixCategory === 'Low-High' && 'Declining'}
-                          {matrixCategory === 'Low-Low' && 'Peripheral'}
+                          {matrixCategory === 'High-High' && 'Consolidating'}
+                          {matrixCategory === 'High-Low' && 'Accelerating'}
+                          {matrixCategory === 'Low-High' && 'Stabilizing'}
+                          {matrixCategory === 'Low-Low' && 'Exploring'}
                         </>
                       ) : (
                         selectedCommunities.join(' ↔ ')
@@ -775,11 +775,11 @@ const App = () => {
                       if (!showPreviousNetwork) e.target.style.background = 'white';
                     }}
                   >
-                    Previous
+                    Current
                   </button>
                 </div>
                 <Tooltip 
-                  text="Predicted: shows forecasted future connections | Previous: shows historical co-occurrence patterns from past publications."
+                  text="Predicted: shows forecasted future connections | Current: shows current co-occurrence patterns from recent publications."
                   position="bottom"
                 />
                 </div>

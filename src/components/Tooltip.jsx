@@ -38,7 +38,7 @@ const Tooltip = ({ text, position = 'top' }) => {
       fontSize: '13px',
       lineHeight: '1.5',
       whiteSpace: 'normal',
-      maxWidth: '500px',
+      width: '320px',
       boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
       zIndex: 1000,
       pointerEvents: 'none',

@@ -120,7 +120,7 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
               {showMatrix ? 'Hide Matrix' : 'Matrix Analysis'}
             </button>
             <Tooltip 
-              text="2x2 matrix categorizing community pairs by their predicted vs. previous strength. High-High = Core & Persistent, High-Low = Emerging, Low-High = Declining, Low-Low = Peripheral."
+              text="2x2 matrix categorizing community pairs by their predicted vs. current strength. High-High = Consolidating, High-Low = Accelerating, Low-High = Stabilizing, Low-Low = Exploring."
               position="left"
             />
             </div>
@@ -167,8 +167,7 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                 cursor: 'pointer',
                 background: rankingMode === 'previous' ? '#27ae60' : 'white',
                 color: rankingMode === 'previous' ? 'white' : '#7f8c8d',
-                transition: 'all 0.2s ease',
-                borderRight: '1px solid #bdc3c7'
+                transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
                 if (rankingMode !== 'previous') e.target.style.background = '#ecf0f1';
@@ -177,32 +176,11 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                 if (rankingMode !== 'previous') e.target.style.background = 'white';
               }}
             >
-              Previous Strength
-            </button>
-            <button
-              onClick={() => onRankingModeChange('rising')}
-              style={{
-                padding: '6px 12px',
-                border: 'none',
-                fontSize: '12px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                background: rankingMode === 'rising' ? '#e67e22' : 'white',
-                color: rankingMode === 'rising' ? 'white' : '#7f8c8d',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                if (rankingMode !== 'rising') e.target.style.background = '#ecf0f1';
-              }}
-              onMouseLeave={(e) => {
-                if (rankingMode !== 'rising') e.target.style.background = 'white';
-              }}
-            >
-              Rising Connections
+              Current Strength
             </button>
           </div>
           <Tooltip 
-            text="Predicted Strength: ranked by future prediction | Previous Strength: ranked by historical data | Rising Connections: ranked by increase in connection strength."
+            text="Predicted Strength: ranked by future prediction | Current Strength: ranked by current co-occurrence data."
             position="left"
           />
           </div>
@@ -251,13 +229,13 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                 onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(39, 174, 96, 0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
-                <span>Core & Persistent</span>
+                <span>Consolidating</span>
                 <span style={{ fontSize: '11px', background: '#27ae60', color: 'white', padding: '2px 6px', borderRadius: '3px' }}>
                   {matrixData.categories['High-High'].length}
                 </span>
               </div>
               <div style={{ fontSize: '10px', color: '#7f8c8d', marginBottom: '8px' }}>
-                High Predicted & High Previous
+                High Predicted & High Current
               </div>
               <div style={{ maxHeight: '120px', overflowY: 'auto' }}>
                 {matrixData.categories['High-High'].map((item, idx) => (
@@ -308,13 +286,13 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                 onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(52, 152, 219, 0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
-                <span>Emerging/Rising</span>
+                <span>Accelerating</span>
                 <span style={{ fontSize: '11px', background: '#3498db', color: 'white', padding: '2px 6px', borderRadius: '3px' }}>
                   {matrixData.categories['High-Low'].length}
                 </span>
               </div>
               <div style={{ fontSize: '10px', color: '#7f8c8d', marginBottom: '8px' }}>
-                High Predicted & Low Previous
+                High Predicted & Low Current
               </div>
               <div style={{ maxHeight: '120px', overflowY: 'auto' }}>
                 {matrixData.categories['High-Low'].map((item, idx) => (
@@ -365,13 +343,13 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                 onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(230, 126, 34, 0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
-                <span>Declining</span>
+                <span>Stabilizing</span>
                 <span style={{ fontSize: '11px', background: '#e67e22', color: 'white', padding: '2px 6px', borderRadius: '3px' }}>
                   {matrixData.categories['Low-High'].length}
                 </span>
               </div>
               <div style={{ fontSize: '10px', color: '#7f8c8d', marginBottom: '8px' }}>
-                Low Predicted & High Previous
+                Low Predicted & High Current
               </div>
               <div style={{ maxHeight: '120px', overflowY: 'auto' }}>
                 {matrixData.categories['Low-High'].map((item, idx) => (
@@ -422,13 +400,13 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                 onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(149, 165, 166, 0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
-                <span>Peripheral</span>
+                <span>Exploring</span>
                 <span style={{ fontSize: '11px', background: '#95a5a6', color: 'white', padding: '2px 6px', borderRadius: '3px' }}>
                   {matrixData.categories['Low-Low'].length}
                 </span>
               </div>
               <div style={{ fontSize: '10px', color: '#7f8c8d', marginBottom: '8px' }}>
-                Low Predicted & Low Previous
+                Low Predicted & Low Current
               </div>
               <div style={{ maxHeight: '120px', overflowY: 'auto' }}>
                 {matrixData.categories['Low-Low'].map((item, idx) => (
@@ -462,7 +440,7 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
             paddingTop: '8px',
             borderTop: '1px solid #e0e0e0'
           }}>
-            Median Split - Predicted: {matrixData.predictedMedian.toFixed(2)}% | Previous: {matrixData.previousMedian.toFixed(2)}%
+            Median Split - Predicted: {matrixData.predictedMedian.toFixed(2)}% | Current: {matrixData.previousMedian.toFixed(2)}%
           </div>
         </div>
       )}
