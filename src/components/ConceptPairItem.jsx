@@ -12,8 +12,91 @@ const ConceptPairItem = ({
 }) => {
   const [showAllChildren1, setShowAllChildren1] = useState(false);
   const [showAllChildren2, setShowAllChildren2] = useState(false);
+  const [expandedSubchildren1, setExpandedSubchildren1] = useState({});
+  const [expandedSubchildren2, setExpandedSubchildren2] = useState({});
   
   const INITIAL_CHILD_COUNT = 20;
+  
+  // Subchild를 펼치거나 접는 함수
+  const toggleSubchild = (concept, childName, setExpandedState) => {
+    setExpandedState(prev => ({
+      ...prev,
+      [childName]: !prev[childName]
+    }));
+  };
+  
+  // Child 데이터를 렌더링하는 헬퍼 함수
+  const renderChildItem = (childName, idx, concept, expandedSubchildren, setExpandedState) => {
+    const childData = childRelations[concept]?.[childName];
+    const hasSubchildren = childData?.subchildren && childData.subchildren.length > 0;
+    const isExpanded = expandedSubchildren[childName];
+    
+    return (
+      <div key={idx} style={{ marginBottom: '4px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          fontSize: '13px',
+          color: '#555',
+          paddingLeft: '4px'
+        }}>
+          {/* 모든 항목에 동일한 너비의 공간 확보 */}
+          <div style={{ width: '20px', display: 'inline-block' }}>
+            {hasSubchildren ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleSubchild(concept, childName, setExpandedState);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0',
+                  fontSize: '12px',
+                  color: '#3498db',
+                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s',
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ▶
+              </button>
+            ) : (
+              <span style={{ fontSize: '13px' }}>•</span>
+            )}
+          </div>
+          <span style={{ marginLeft: '4px' }}>
+            {childName}
+          </span>
+        </div>
+        
+        {/* Subchildren */}
+        {isExpanded && hasSubchildren && (
+          <div style={{
+            marginLeft: '28px',
+            marginTop: '4px',
+            paddingLeft: '6px',
+            borderLeft: '2px solid #e0e0e0'
+          }}>
+            {childData.subchildren.map((subchild, subIdx) => (
+              <div key={subIdx} style={{
+                fontSize: '12px',
+                color: '#777',
+                marginBottom: '1px'
+              }}>
+                ◦ {subchild}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
   
   // Get matrix category for this concept pair's community pair
   const pairKey = `${pair.community1}|||${pair.community2}`;
@@ -50,7 +133,7 @@ const ConceptPairItem = ({
       style={{
         border: isExpanded ? '2px solid #3498db' : '1px solid #e0e0e0',
         borderRadius: '6px',
-        padding: '12px',
+        padding: '10px',
         marginBottom: '10px',
         cursor: 'pointer',
         background: isExpanded ? '#f8f9fa' : 'white',
@@ -79,7 +162,7 @@ const ConceptPairItem = ({
       }}>
         <div style={{
           fontWeight: 'bold',
-          fontSize: '15px',
+          fontSize: '16px',
           flex: 1
         }}>
           <span style={{ color: '#7f8c8d' }}>{pair.rank}. </span>
@@ -114,12 +197,12 @@ const ConceptPairItem = ({
       
       {/* Prediction Score & Matrix Category */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <div style={{ fontSize: '13px', color: '#555', fontWeight: '600' }}>
-          Score: {pair.prediction_score.toFixed(3)}
+        <div style={{ fontSize: '14px', color: '#555', fontWeight: '600' }}>
+          Score: {pair.prediction_score.toFixed(1)}
         </div>
         {matrixCategory && (
           <div style={{
-            fontSize: '10px',
+            fontSize: '11px',
             fontWeight: '600',
             color: matrixCategory.color,
             background: `${matrixCategory.color}15`,
@@ -137,28 +220,28 @@ const ConceptPairItem = ({
       {/* 확장된 상세 정보 */}
       {isExpanded && (
         <div style={{
-          marginTop: '15px',
-          paddingTop: '15px',
+          marginTop: '12px',
+          paddingTop: '12px',
           borderTop: '2px solid #3498db'
         }}>
           {/* Concept 메타데이터 - 2컬럼 */}
           <div style={{ 
             display: 'flex', 
-            gap: '20px',
-            marginBottom: '15px',
-            paddingBottom: '15px',
+            gap: '16px',
+            marginBottom: '12px',
+            paddingBottom: '12px',
             borderBottom: '1px solid #e0e0e0'
           }}>
             {/* Concept 1 */}
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: '600' }}>
+              <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px', fontWeight: '600' }}>
                 Papers: {pair.concept1_freq}
               </div>
-              <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: '600' }}>
+              <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px', fontWeight: '600' }}>
                 Main Field: {pair.concept1_field.trim()} ({(pair.concept1_field_ratio * 100).toFixed(0)}%)
               </div>
               <div style={{ 
-                fontSize: '12px', 
+                fontSize: '13px', 
                 color: '#2c3e50',
                 fontWeight: '700',
                 background: '#f5f5f5',
@@ -174,14 +257,14 @@ const ConceptPairItem = ({
 
             {/* Concept 2 */}
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: '600' }}>
+              <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px', fontWeight: '600' }}>
                 Papers: {pair.concept2_freq}
               </div>
-              <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: '600' }}>
+              <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px', fontWeight: '600' }}>
                 Main Field: {pair.concept2_field.trim()} ({(pair.concept2_field_ratio * 100).toFixed(0)}%)
               </div>
               <div style={{ 
-                fontSize: '12px', 
+                fontSize: '13px', 
                 color: '#2c3e50',
                 fontWeight: '700',
                 background: '#f5f5f5',
@@ -200,53 +283,46 @@ const ConceptPairItem = ({
           <div style={{
             fontWeight: 'bold',
             color: '#000000ff',
-            marginBottom: '12px',
-            fontSize: '14px'
+            marginBottom: '10px',
+            fontSize: '15px'
           }}>
             Child Concepts
           </div>
           
-          <div style={{ display: 'flex', gap: '20px' }}>
+          <div style={{ display: 'flex', gap: '16px' }}>
             {/* Left Column - Concept 1 */}
             <div style={{ 
               flex: 1,
               border: '1px solid #e0e0e0',
               borderRadius: '6px',
-              padding: '12px',
+              padding: '10px',
               background: 'white'
             }}>
               <div style={{
                 fontWeight: '700',
                 color: '#2c3e50',
-                marginBottom: '10px',
-                fontSize: '13px',
-                paddingBottom: '8px',
+                marginBottom: '8px',
+                fontSize: '14px',
+                paddingBottom: '6px',
                 borderBottom: '2px solid #e0e0e0'
               }}>
                 {pair.concept1}
               </div>
-              {childRelations[pair.concept1] && childRelations[pair.concept1].length > 0 ? (
+              {childRelations[pair.concept1] && Object.keys(childRelations[pair.concept1]).length > 0 ? (
                 <>
-                  {childRelations[pair.concept1]
+                  {Object.keys(childRelations[pair.concept1])
                     .slice(0, showAllChildren1 ? undefined : INITIAL_CHILD_COUNT)
-                    .map((child, idx) => (
-                      <div key={idx} style={{
-                        fontSize: '12px',
-                        color: '#555',
-                        marginBottom: '4px',
-                        paddingLeft: '8px'
-                      }}>
-                        • {child}
-                      </div>
-                    ))}
-                  {childRelations[pair.concept1].length > INITIAL_CHILD_COUNT && (
+                    .map((childName, idx) => 
+                      renderChildItem(childName, idx, pair.concept1, expandedSubchildren1, setExpandedSubchildren1)
+                    )}
+                  {Object.keys(childRelations[pair.concept1]).length > INITIAL_CHILD_COUNT && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowAllChildren1(!showAllChildren1);
                       }}
                       style={{
-                        fontSize: '11px',
+                        fontSize: '12px',
                         color: '#27ae60',
                         background: 'none',
                         border: 'none',
@@ -258,12 +334,12 @@ const ConceptPairItem = ({
                     >
                       {showAllChildren1 
                         ? `Show less` 
-                        : `Show ${childRelations[pair.concept1].length - INITIAL_CHILD_COUNT} more...`}
+                        : `Show ${Object.keys(childRelations[pair.concept1]).length - INITIAL_CHILD_COUNT} more...`}
                     </button>
                   )}
                 </>
               ) : (
-                <div style={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>
+                <div style={{ fontSize: '13px', color: '#999', fontStyle: 'italic' }}>
                   No child concepts found
                 </div>
               )}
@@ -274,41 +350,34 @@ const ConceptPairItem = ({
               flex: 1,
               border: '1px solid #e0e0e0',
               borderRadius: '6px',
-              padding: '12px',
+              padding: '10px',
               background: 'white'
             }}>
               <div style={{
                 fontWeight: '700',
                 color: '#2c3e50',
-                marginBottom: '10px',
-                fontSize: '13px',
-                paddingBottom: '8px',
+                marginBottom: '8px',
+                fontSize: '14px',
+                paddingBottom: '6px',
                 borderBottom: '2px solid #e8f5e9'
               }}>
                 {pair.concept2}
               </div>
-              {childRelations[pair.concept2] && childRelations[pair.concept2].length > 0 ? (
+              {childRelations[pair.concept2] && Object.keys(childRelations[pair.concept2]).length > 0 ? (
                 <>
-                  {childRelations[pair.concept2]
+                  {Object.keys(childRelations[pair.concept2])
                     .slice(0, showAllChildren2 ? undefined : INITIAL_CHILD_COUNT)
-                    .map((child, idx) => (
-                      <div key={idx} style={{
-                        fontSize: '12px',
-                        color: '#555',
-                        marginBottom: '4px',
-                        paddingLeft: '8px'
-                      }}>
-                        • {child}
-                      </div>
-                    ))}
-                  {childRelations[pair.concept2].length > INITIAL_CHILD_COUNT && (
+                    .map((childName, idx) => 
+                      renderChildItem(childName, idx, pair.concept2, expandedSubchildren2, setExpandedSubchildren2)
+                    )}
+                  {Object.keys(childRelations[pair.concept2]).length > INITIAL_CHILD_COUNT && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowAllChildren2(!showAllChildren2);
                       }}
                       style={{
-                        fontSize: '11px',
+                        fontSize: '12px',
                         color: '#27ae60',
                         background: 'none',
                         border: 'none',
@@ -320,12 +389,12 @@ const ConceptPairItem = ({
                     >
                       {showAllChildren2 
                         ? `Show less` 
-                        : `Show ${childRelations[pair.concept2].length - INITIAL_CHILD_COUNT} more...`}
+                        : `Show ${Object.keys(childRelations[pair.concept2]).length - INITIAL_CHILD_COUNT} more...`}
                     </button>
                   )}
                 </>
               ) : (
-                <div style={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>
+                <div style={{ fontSize: '13px', color: '#999', fontStyle: 'italic' }}>
                   No child concepts found
                 </div>
               )}

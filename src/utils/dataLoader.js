@@ -47,7 +47,7 @@ export const loadAllData = async (dataSource = 'ft50') => {
     const [csvData, previousData, childRelations] = await Promise.all([
       loadCSV(`top_predicted_pairs${suffix}.csv`),
       loadCSV(`previous_concept_pairs${suffix}.csv`),
-      loadJSON('child_relationships.json')
+      loadJSON('child_relationship_add_subchild.json')  // 새로운 JSON 파일 사용
     ]);
     
     // previous 데이터를 top_predicted_pairs와 동일한 형식으로 정규화
