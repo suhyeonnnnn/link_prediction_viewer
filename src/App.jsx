@@ -14,6 +14,7 @@ import NetworkGraph from './components/NetworkGraph';
 import ConceptPairsList from './components/ConceptPairsList';
 import CommunityRanking from './components/CommunityRanking';
 import IntroPage from './components/IntroPage';
+import Tooltip from './components/Tooltip';
 
 const App = () => {
   const [showIntro, setShowIntro] = useState(true);
@@ -170,8 +171,6 @@ const App = () => {
     
     // 1. Get top N predicted pairs for concentration calculation
     const topPredictedData = getTopPredictedPairs(rawData, topN);
-    console.log('🔍 topN:', topN);
-    console.log('🔍 topPredictedData length:', topPredictedData.length);
     
     // Data for ranking (only top N)
     const dataForRanking = topPredictedData.map(pair => ({
@@ -182,15 +181,11 @@ const App = () => {
       pred: pair.prediction_score
     }));
     
-    console.log('🔍 dataForRanking length:', dataForRanking.length);
-    
     // 2. Get all previous data
     const previousDataForRanking = previousData.map(row => ({
       c1_community: row.c1_community,
       c2_community: row.c2_community
     }));
-    
-    console.log('🔍 previousDataForRanking length:', previousDataForRanking.length);
     
     // 3. Combine: Get comprehensive ranking with comparison
     //    This will include all community pairs from both topN and previous
@@ -199,9 +194,6 @@ const App = () => {
       previousDataForRanking,  // all previous pairs
       weightMode
     );
-    
-    console.log('🔍 fullRanking length:', fullRanking.length);
-    console.log('🔍 fullRanking sample:', fullRanking.slice(0, 3));
     
     // Calculate previous ranking (sort by previous_count)
     const previousRanking = [...fullRanking]
@@ -480,15 +472,16 @@ const App = () => {
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           {/* Data Source Toggle */}
-          <div style={{
-            display: 'flex',
-            gap: '0',
-            border: '3px solid #ffffff',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            background: '#1a252f',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-          }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{
+              display: 'flex',
+              gap: '0',
+              border: '3px solid #ffffff',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              background: '#1a252f',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+            }}>
             <button
               onClick={() => setDataSource('ft50')}
               style={{
@@ -534,6 +527,13 @@ const App = () => {
             >
               Service Data
             </button>
+            </div>
+            <div style={{ marginLeft: '-2px' }}>
+              <Tooltip 
+                text="Switch between FT50 (Financial Times top 50 technologies) and Service (service-related concepts) datasets. Each dataset shows different community structures and prediction patterns."
+                position="bottom"
+              />
+            </div>
           </div>
           <div style={{ fontSize: '14px', fontWeight: 'normal', opacity: 0.8 }}>
             Predicted: {rawData.length} | Previous: {previousData.length} | Network: {networkFilteredData.length} pairs, {networkData.nodes.length} communities
@@ -563,9 +563,15 @@ const App = () => {
             flexWrap: 'wrap',
             gap: '10px'
           }}>
-            <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
-              Top Predicted Concept Pairs
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
+                Top Predicted Concept Pairs
+              </h2>
+              <Tooltip 
+                text="Shows concept pairs ranked by prediction score. Click on pairs to see details, or filter by clicking communities in the network or matrix categories."
+                position="right"
+              />
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
               {selectedCommunities.length > 0 && (
                 <div style={{
@@ -705,11 +711,18 @@ const App = () => {
               flexWrap: 'wrap',
               gap: '10px'
             }}>
-              <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
-                Concept Communities Network
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
+                  Concept Communities Network
+                </h2>
+                <Tooltip 
+                  text="Network visualization of community relationships. Node size = number of pairs, link thickness = connection strength. Click nodes to filter by community, click links to see pairs between communities."
+                  position="bottom"
+                />
+              </div>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                 {/* Network Type Toggle */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <div style={{
                   display: 'flex',
                   gap: '0',
@@ -764,6 +777,11 @@ const App = () => {
                   >
                     Previous
                   </button>
+                </div>
+                <Tooltip 
+                  text="Predicted: shows forecasted future connections | Previous: shows historical co-occurrence patterns from past publications."
+                  position="bottom"
+                />
                 </div>
                 
                 {/* Year Filter - Previous mode only */}

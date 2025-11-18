@@ -165,19 +165,18 @@ export const getConceptCommunitiesNetwork = (data, weightMode = 'count') => {
     communities.add(row.c1_community);
     communities.add(row.c2_community);
     
-    if (row.c1_community !== row.c2_community) {
-      const key = [row.c1_community, row.c2_community].sort().join('|||');
-      
-      if (!linkMap[key]) {
-        linkMap[key] = {
-          count: 0,
-          predSum: 0
-        };
-      }
-      
-      linkMap[key].count += 1;
-      linkMap[key].predSum += row.pred;
+    // Allow self-loops (same community connections)
+    const key = [row.c1_community, row.c2_community].sort().join('|||');
+    
+    if (!linkMap[key]) {
+      linkMap[key] = {
+        count: 0,
+        predSum: 0
+      };
     }
+    
+    linkMap[key].count += 1;
+    linkMap[key].predSum += row.pred;
   });
   
   const nodes = Array.from(communities).map(comm => {
@@ -266,10 +265,6 @@ export const getCommunityPairRankingWithComparison = (predictedData, previousDat
   const predictedStats = {};
   const previousStats = {};
   
-  console.log('📊 getCommunityPairRankingWithComparison called');
-  console.log('📊 predictedData length:', predictedData.length);
-  console.log('📊 previousData length:', previousData.length);
-  
   // Calculate predicted stats
   predictedData.forEach(row => {
     const c1 = row.c1_community;
@@ -291,8 +286,6 @@ export const getCommunityPairRankingWithComparison = (predictedData, previousDat
     predictedStats[pairKey].total_strength += row.pred;
   });
   
-  console.log('📊 predictedStats keys:', Object.keys(predictedStats).length);
-  
   // Calculate previous stats
   previousData.forEach(row => {
     const c1 = row.c1_community;
@@ -312,15 +305,11 @@ export const getCommunityPairRankingWithComparison = (predictedData, previousDat
     previousStats[pairKey].count += 1;
   });
   
-  console.log('📊 previousStats keys:', Object.keys(previousStats).length);
-  
   const totalPredicted = predictedData.length;
   const totalPrevious = previousData.length;
   
   // Combine stats
   const allPairKeys = new Set([...Object.keys(predictedStats), ...Object.keys(previousStats)]);
-  
-  console.log('📊 allPairKeys size (union):', allPairKeys.size);
   
   const ranking = Array.from(allPairKeys).map(pairKey => {
     const predicted = predictedStats[pairKey] || { count: 0, total_strength: 0 };

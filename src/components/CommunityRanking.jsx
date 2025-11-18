@@ -1,4 +1,5 @@
 import React from 'react';
+import Tooltip from './Tooltip';
 
 const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemClick, onReset, rankingMode, onRankingModeChange, onMatrixCategoryClick }) => {
   const [showMatrix, setShowMatrix] = React.useState(false);
@@ -83,12 +84,19 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
         flexWrap: 'wrap',
         gap: '10px'
       }}>
-        <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
-          Community Pair Ranking
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
+            Community Pair Ranking
+          </h2>
+          <Tooltip 
+            text="Rankings of community pairs. Use buttons to switch between predicted strength, previous strength, or rising connections. Matrix Analysis categorizes pairs by their change patterns."
+            position="bottom"
+          />
+        </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           {/* Matrix Analysis Button */}
           {matrixData && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <button
               onClick={() => setShowMatrix(!showMatrix)}
               style={{
@@ -111,8 +119,14 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
             >
               {showMatrix ? 'Hide Matrix' : 'Matrix Analysis'}
             </button>
+            <Tooltip 
+              text="2x2 matrix categorizing community pairs by their predicted vs. previous strength. High-High = Core & Persistent, High-Low = Emerging, Low-High = Declining, Low-Low = Peripheral."
+              position="left"
+            />
+            </div>
           )}
           {/* Ranking Mode Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <div style={{
             display: 'flex',
             gap: '0',
@@ -186,6 +200,11 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
             >
               Rising Connections
             </button>
+          </div>
+          <Tooltip 
+            text="Predicted Strength: ranked by future prediction | Previous Strength: ranked by historical data | Rising Connections: ranked by increase in connection strength."
+            position="left"
+          />
           </div>
         </div>
       </div>
@@ -314,7 +333,7 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                   >
                     {item.community1} ↔ {item.community2}
                     <div style={{ fontSize: '9px', color: '#95a5a6' }}>
-                      P:{item.predicted_concentration}% / Pr:{item.previous_concentration}%
+                      P:{item.predicted_concentration.toFixed(2)}% / Pr:{item.previous_concentration.toFixed(2)}%
                     </div>
                   </div>
                 ))}
@@ -371,7 +390,7 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                   >
                     {item.community1} ↔ {item.community2}
                     <div style={{ fontSize: '9px', color: '#95a5a6' }}>
-                      P:{item.predicted_concentration}% / Pr:{item.previous_concentration}%
+                      P:{item.predicted_concentration.toFixed(2)}% / Pr:{item.previous_concentration.toFixed(2)}%
                     </div>
                   </div>
                 ))}
@@ -428,7 +447,7 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                   >
                     {item.community1} ↔ {item.community2}
                     <div style={{ fontSize: '9px', color: '#95a5a6' }}>
-                      P:{item.predicted_concentration}% / Pr:{item.previous_concentration}%
+                      P:{item.predicted_concentration.toFixed(2)}% / Pr:{item.previous_concentration.toFixed(2)}%
                     </div>
                   </div>
                 ))}

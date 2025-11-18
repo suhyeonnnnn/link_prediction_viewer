@@ -97,9 +97,23 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
       .force('collision', d3.forceCollide().radius(50));
 
     // Links - 강도에 따라 차별화 + 클릭 가능
+    // Separate self-loops and regular links
+    const selfLoops = filteredLinks.filter(d => {
+      const sourceId = d.source.id || d.source;
+      const targetId = d.target.id || d.target;
+      return sourceId === targetId;
+    });
+    
+    const regularLinks = filteredLinks.filter(d => {
+      const sourceId = d.source.id || d.source;
+      const targetId = d.target.id || d.target;
+      return sourceId !== targetId;
+    });
+    
+    // Draw regular links as lines
     const link = g.append('g')
       .selectAll('line')
-      .data(filteredLinks)
+      .data(regularLinks)
       .join('line')
       .attr('stroke', d => {
         // If this link is highlighted, use highlight color
@@ -354,6 +368,95 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
         .attr('stroke', '#e0e0e0')
         .attr('stroke-width', 0.5);
     });
+    
+    // Draw self-loops as arcs
+    const selfLoopGroup = g.append('g');
+    const selfLoopPaths = selfLoopGroup
+      .selectAll('path')
+      .data(selfLoops)
+      .join('path')
+      .attr('fill', 'none')
+      .attr('stroke', d => {
+        if (isHighlightedLink(d)) {
+          return '#2ecc71';
+        }
+        if (d.weight >= weightThreshold) {
+          return '#555';
+        } else {
+          return '#ddd';
+        }
+      })
+      .attr('stroke-opacity', d => {
+        if (isHighlightedLink(d)) {
+          return 0.9;
+        }
+        if (highlightedNodes.length === 2) {
+          return 0.1;
+        }
+        if (d.weight >= weightThreshold) {
+          const normalized = (d.weight - weightThreshold) / (maxWeight - weightThreshold);
+          return 0.5 + normalized * 0.4;
+        } else {
+          return 0.15;
+        }
+      })
+      .attr('stroke-width', d => {
+        if (isHighlightedLink(d)) {
+          return 6;
+        }
+        return getStrokeWidth(d.weight);
+      })
+      .style('cursor', 'pointer')
+      .on('click', (event, d) => {
+        event.stopPropagation();
+        const sourceId = d.source.id || d.source;
+        if (onLinkClick) {
+          onLinkClick(sourceId, sourceId);
+        }
+      })
+      .on('mouseover', function(event, d) {
+        const hoveredPath = d3.select(this);
+        const pairCount = d.weight || 0;
+        tooltip.html(`<strong>Within-Community Pairs:</strong> ${pairCount}`)
+          .style('visibility', 'visible')
+          .style('left', (event.pageX + 10) + 'px')
+          .style('top', (event.pageY - 10) + 'px');
+        
+        hoveredPath
+          .attr('stroke', '#2196f3')
+          .attr('stroke-width', 6)
+          .attr('stroke-opacity', 0.8);
+      })
+      .on('mousemove', function(event) {
+        tooltip
+          .style('left', (event.pageX + 10) + 'px')
+          .style('top', (event.pageY - 10) + 'px');
+      })
+      .on('mouseout', function(event, d) {
+        const path = d3.select(this);
+        tooltip.style('visibility', 'hidden');
+        
+        if (isHighlightedLink(d)) {
+          path
+            .attr('stroke', '#2ecc71')
+            .attr('stroke-width', 6)
+            .attr('stroke-opacity', 0.9);
+        } else {
+          path
+            .attr('stroke', d.weight >= weightThreshold ? '#555' : '#ddd')
+            .attr('stroke-width', getStrokeWidth(d.weight))
+            .attr('stroke-opacity', () => {
+              if (highlightedNodes.length === 2) {
+                return 0.1;
+              }
+              if (d.weight >= weightThreshold) {
+                const normalized = (d.weight - weightThreshold) / (maxWeight - weightThreshold);
+                return 0.5 + normalized * 0.4;
+              }
+              return 0.15;
+            });
+        }
+      });
 
     simulation.on('tick', () => {
       link
@@ -361,6 +464,7 @@ const NetworkGraph = ({ data, highlightedNodes, onNodeClick, onLinkClick, hideBo
         .attr('y1', d => d.source.y)
         .attr('x2', d => d.target.x)
         .attr('y2', d => d.target.y);
+      
 
       node.attr('transform', d => `translate(${d.x},${d.y})`);
     });
