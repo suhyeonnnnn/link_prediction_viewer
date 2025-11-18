@@ -42,19 +42,19 @@ const ConceptPairItem = ({
   return (
     <div 
       style={{
-        border: isExpanded ? '2px solid #27ae60' : '1px solid #e0e0e0',
+        border: isExpanded ? '2px solid #3498db' : '1px solid #e0e0e0',
         borderRadius: '6px',
         padding: '12px',
         marginBottom: '10px',
         cursor: 'pointer',
-        background: isExpanded ? '#e8f5e9' : 'white',
+        background: isExpanded ? '#f8f9fa' : 'white',
         transition: 'all 0.2s'
       }}
       onClick={() => onToggleExpand(pair)}
       onMouseEnter={(e) => {
         if (!isExpanded) {
           e.currentTarget.style.background = '#f8f9fa';
-          e.currentTarget.style.borderColor = '#27ae60';
+          e.currentTarget.style.borderColor = '#3498db';
         }
       }}
       onMouseLeave={(e) => {
@@ -77,9 +77,23 @@ const ConceptPairItem = ({
           flex: 1
         }}>
           <span style={{ color: '#7f8c8d' }}>{pair.rank}. </span>
-          <span style={{ color: color1, fontWeight: 'bold' }}>{pair.concept1}</span>
+          <span style={{ 
+            color: '#2c3e50', 
+            fontWeight: 'bold',
+            borderBottom: isFiltered && (isEdgeFilter || selectedCommunities.includes(pair.community1)) 
+              ? `2px solid ${colorMap[pair.community1] || '#95a5a6'}` 
+              : 'none',
+            paddingBottom: '2px'
+          }}>{pair.concept1}</span>
           <span style={{ color: '#7f8c8d' }}> ↔ </span>
-          <span style={{ color: color2, fontWeight: 'bold' }}>{pair.concept2}</span>
+          <span style={{ 
+            color: '#2c3e50', 
+            fontWeight: 'bold',
+            borderBottom: isFiltered && (isEdgeFilter || selectedCommunities.includes(pair.community2)) 
+              ? `2px solid ${colorMap[pair.community2] || '#95a5a6'}` 
+              : 'none',
+            paddingBottom: '2px'
+          }}>{pair.concept2}</span>
         </div>
         <div style={{
           fontSize: '18px',
@@ -102,7 +116,7 @@ const ConceptPairItem = ({
         <div style={{
           marginTop: '15px',
           paddingTop: '15px',
-          borderTop: '2px solid #27ae60'
+          borderTop: '2px solid #3498db'
         }}>
           {/* Concept 메타데이터 - 2컬럼 */}
           <div style={{ 
@@ -114,65 +128,47 @@ const ConceptPairItem = ({
           }}>
             {/* Concept 1 */}
             <div style={{ flex: 1 }}>
-              <div style={{
-                fontWeight: '700',
-                color: color1,
-                marginBottom: '8px',
-                fontSize: '13px'
-              }}>
-                {pair.concept1}
+              <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: '600' }}>
+                Papers: {pair.concept1_freq}
               </div>
-              <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px' }}>
-                <span style={{ marginRight: '4px' }}>📈</span>
-                Freq: {pair.concept1_freq}
-              </div>
-              <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px' }}>
-                <span style={{ marginRight: '4px' }}>🏷️</span>
-                {pair.concept1_field} ({pair.concept1_field_ratio.toFixed(1)})
+              <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: '600' }}>
+                Main Field: {pair.concept1_field.trim()} ({(pair.concept1_field_ratio * 100).toFixed(0)}%)
               </div>
               <div style={{ 
                 fontSize: '12px', 
-                color: isFiltered && (isEdgeFilter || selectedCommunities.includes(pair.community1)) ? color1 : '#27ae60', 
-                fontWeight: '600',
-                background: isFiltered && (isEdgeFilter || selectedCommunities.includes(pair.community1)) ? `${color1}15` : '#e8f5e9',
+                color: '#2c3e50',
+                fontWeight: '700',
+                background: '#f5f5f5',
                 padding: '4px 8px',
                 borderRadius: '4px',
-                display: 'inline-block'
+                borderLeft: `4px solid ${colorMap[pair.community1] || '#95a5a6'}`,
+                display: 'inline-block',
+                marginTop: '4px'
               }}>
-                <span style={{ marginRight: '4px' }}>🔗</span>
-                {pair.community1}
+                {pair.community1.trim()}
               </div>
             </div>
 
             {/* Concept 2 */}
             <div style={{ flex: 1 }}>
-              <div style={{
-                fontWeight: '700',
-                color: color2,
-                marginBottom: '8px',
-                fontSize: '13px'
-              }}>
-                {pair.concept2}
+              <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: '600' }}>
+                Papers: {pair.concept2_freq}
               </div>
-              <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px' }}>
-                <span style={{ marginRight: '4px' }}>📈</span>
-                Freq: {pair.concept2_freq}
-              </div>
-              <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px' }}>
-                <span style={{ marginRight: '4px' }}>🏷️</span>
-                {pair.concept2_field} ({pair.concept2_field_ratio.toFixed(1)})
+              <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: '600' }}>
+                Main Field: {pair.concept2_field.trim()} ({(pair.concept2_field_ratio * 100).toFixed(0)}%)
               </div>
               <div style={{ 
                 fontSize: '12px', 
-                color: isFiltered && (isEdgeFilter || selectedCommunities.includes(pair.community2)) ? color2 : '#27ae60', 
-                fontWeight: '600',
-                background: isFiltered && (isEdgeFilter || selectedCommunities.includes(pair.community2)) ? `${color2}15` : '#e8f5e9',
+                color: '#2c3e50',
+                fontWeight: '700',
+                background: '#f5f5f5',
                 padding: '4px 8px',
                 borderRadius: '4px',
-                display: 'inline-block'
+                borderLeft: `4px solid ${colorMap[pair.community2] || '#95a5a6'}`,
+                display: 'inline-block',
+                marginTop: '4px'
               }}>
-                <span style={{ marginRight: '4px' }}>🔗</span>
-                {pair.community2}
+                {pair.community2.trim()}
               </div>
             </div>
           </div>
@@ -180,7 +176,7 @@ const ConceptPairItem = ({
           {/* Child Concepts */}
           <div style={{
             fontWeight: 'bold',
-            color: '#27ae60',
+            color: '#000000ff',
             marginBottom: '12px',
             fontSize: '14px'
           }}>
@@ -189,7 +185,23 @@ const ConceptPairItem = ({
           
           <div style={{ display: 'flex', gap: '20px' }}>
             {/* Left Column - Concept 1 */}
-            <div style={{ flex: 1 }}>
+            <div style={{ 
+              flex: 1,
+              border: '1px solid #e0e0e0',
+              borderRadius: '6px',
+              padding: '12px',
+              background: 'white'
+            }}>
+              <div style={{
+                fontWeight: '700',
+                color: '#2c3e50',
+                marginBottom: '10px',
+                fontSize: '13px',
+                paddingBottom: '8px',
+                borderBottom: '2px solid #e0e0e0'
+              }}>
+                {pair.concept1}
+              </div>
               {childRelations[pair.concept1] && childRelations[pair.concept1].length > 0 ? (
                 <>
                   {childRelations[pair.concept1]
@@ -235,7 +247,23 @@ const ConceptPairItem = ({
             </div>
 
             {/* Right Column - Concept 2 */}
-            <div style={{ flex: 1 }}>
+            <div style={{ 
+              flex: 1,
+              border: '1px solid #e0e0e0',
+              borderRadius: '6px',
+              padding: '12px',
+              background: 'white'
+            }}>
+              <div style={{
+                fontWeight: '700',
+                color: '#2c3e50',
+                marginBottom: '10px',
+                fontSize: '13px',
+                paddingBottom: '8px',
+                borderBottom: '2px solid #e8f5e9'
+              }}>
+                {pair.concept2}
+              </div>
               {childRelations[pair.concept2] && childRelations[pair.concept2].length > 0 ? (
                 <>
                   {childRelations[pair.concept2]
