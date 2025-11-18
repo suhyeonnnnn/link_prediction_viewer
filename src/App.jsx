@@ -167,7 +167,7 @@ const App = () => {
 
   const communityRanking = useMemo(() => {
     if (!rawData || rawData.length === 0) return [];
-    if (!previousData || previousData.length === 0) return [];
+    if (!filteredPreviousData || filteredPreviousData.length === 0) return [];
     
     // 1. Get top N predicted pairs for concentration calculation
     const topPredictedData = getTopPredictedPairs(rawData, topN);
@@ -181,8 +181,8 @@ const App = () => {
       pred: pair.prediction_score
     }));
     
-    // 2. Get all previous data
-    const previousDataForRanking = previousData.map(row => ({
+    // 2. Get filtered previous data (with year filter applied)
+    const previousDataForRanking = filteredPreviousData.map(row => ({
       c1_community: row.c1_community,
       c2_community: row.c2_community
     }));
@@ -243,7 +243,7 @@ const App = () => {
     });
     
     return { ranked: rankedData, full: fullRanking };
-  }, [rawData, previousData, topN, weightMode, rankingMode]);
+  }, [rawData, filteredPreviousData, topN, weightMode, rankingMode]);
 
   // Calculate matrix categories map for concept pairs
   const communityPairCategories = useMemo(() => {

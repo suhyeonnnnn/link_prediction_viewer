@@ -498,7 +498,6 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                             ({item.rankChange > 0 ? '↑' : '↓'}{Math.abs(item.rankChange)})
                           </span>
                         )}
-                        <span>| Previous: #{item.previousRank}</span>
                       </>
                     )}
                     {!item.previousRank && item.previous_count === 0 && (
@@ -506,10 +505,10 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                     )}
                   </div>
                   <div>
-                    <span style={{ fontWeight: '600' }}>Pred:</span> {item.predicted_count} pairs ({item.predicted_concentration.toFixed(2)}%)
+                    <span style={{ fontWeight: '600' }}>Predicted:</span> {item.predicted_count} pairs ({item.predicted_concentration.toFixed(2)}%)
                     {item.previous_count > 0 && (
                       <span style={{ marginLeft: '8px' }}>
-                        | <span style={{ fontWeight: '600' }}>Prev:</span> {item.previous_count} pairs ({item.previous_concentration.toFixed(2)}%)
+                        | <span style={{ fontWeight: '600' }}>Current:</span> {item.previous_count} pairs ({item.previous_concentration.toFixed(2)}%)
                       </span>
                     )}
                   </div>
@@ -517,12 +516,12 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
               ) : rankingMode === 'previous' ? (
                 <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '4px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                    <span style={{ fontWeight: '600' }}>Previous Rank: #{item.rank}</span>
+                    <span style={{ fontWeight: '600' }}>Rank: #{item.rank}</span>
                   </div>
                   <div>
-                    <span style={{ fontWeight: '600' }}>Prev:</span> {item.previous_count} pairs ({item.previous_concentration.toFixed(2)}%)
+                    <span style={{ fontWeight: '600' }}>Current:</span> {item.previous_count} pairs ({item.previous_concentration.toFixed(2)}%)
                     <span style={{ marginLeft: '8px' }}>
-                      | <span style={{ fontWeight: '600' }}>Pred:</span> {item.predicted_count} pairs ({item.predicted_concentration.toFixed(2)}%)
+                      | <span style={{ fontWeight: '600' }}>Predicted:</span> {item.predicted_count} pairs ({item.predicted_concentration.toFixed(2)}%)
                     </span>
                   </div>
                 </div>
@@ -539,7 +538,7 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                     </span>
                   </div>
                   <div style={{ color: '#95a5a6', fontSize: '11px', marginTop: '2px' }}>
-                    Pred: {item.predicted_concentration.toFixed(2)}% ({item.predicted_count}) | Prev: {item.previous_concentration.toFixed(2)}% ({item.previous_count})
+                    Predicted: {item.predicted_concentration.toFixed(2)}% ({item.predicted_count}) | Current: {item.previous_concentration.toFixed(2)}% ({item.previous_count})
                   </div>
                 </div>
               )}
