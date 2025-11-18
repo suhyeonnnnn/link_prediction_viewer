@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ConceptPairItem from './ConceptPairItem';
 
-const ConceptPairsList = ({ pairs, expandedPairs, onToggleExpand, childRelations, colorMap = {}, isFiltered = false, selectedCommunities = [] }) => {
+const ConceptPairsList = ({ pairs, expandedPairs, onToggleExpand, childRelations, colorMap = {}, isFiltered = false, selectedCommunities = [], communityPairCategories = {} }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
   
@@ -60,6 +60,7 @@ const ConceptPairsList = ({ pairs, expandedPairs, onToggleExpand, childRelations
               colorMap={colorMap}
               isFiltered={isFiltered}
               selectedCommunities={selectedCommunities}
+              communityPairCategories={communityPairCategories}
             />
           );
         })}

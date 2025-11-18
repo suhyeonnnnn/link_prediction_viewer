@@ -245,6 +245,60 @@ const App = () => {
     return { ranked: rankedData, full: fullRanking };
   }, [rawData, previousData, topN, weightMode, rankingMode]);
 
+  // Calculate matrix categories map for concept pairs
+  const communityPairCategories = useMemo(() => {
+    if (!communityRanking || !communityRanking.full) return {};
+    
+    const pairsWithBothData = communityRanking.full.filter(
+      item => item.previous_count >= 0 && item.predicted_count >= 0
+    );
+    
+    if (pairsWithBothData.length === 0) return {};
+    
+    const predictedConcentrations = pairsWithBothData
+      .map(item => item.predicted_concentration)
+      .sort((a, b) => a - b);
+    const previousConcentrations = pairsWithBothData
+      .map(item => item.previous_concentration)
+      .sort((a, b) => a - b);
+    
+    const getMedian = (sortedArray) => {
+      const length = sortedArray.length;
+      const mid = Math.floor(length / 2);
+      if (length % 2 === 0) {
+        return (sortedArray[mid - 1] + sortedArray[mid]) / 2;
+      } else {
+        return sortedArray[mid];
+      }
+    };
+    
+    const predictedMedian = getMedian(predictedConcentrations);
+    const previousMedian = getMedian(previousConcentrations);
+    
+    const categoriesMap = {};
+    
+    pairsWithBothData.forEach(item => {
+      const pairKey = `${item.community1}|||${item.community2}`;
+      const highPredicted = item.predicted_concentration > predictedMedian;
+      const highPrevious = item.previous_concentration > previousMedian;
+      
+      let category;
+      if (highPredicted && highPrevious) {
+        category = { label: 'Consolidating', color: '#27ae60' };
+      } else if (highPredicted && !highPrevious) {
+        category = { label: 'Accelerating', color: '#3498db' };
+      } else if (!highPredicted && highPrevious) {
+        category = { label: 'Stabilizing', color: '#e67e22' };
+      } else {
+        category = { label: 'Exploring', color: '#95a5a6' };
+      }
+      
+      categoriesMap[pairKey] = category;
+    });
+    
+    return categoriesMap;
+  }, [communityRanking]);
+
   const handleToggleExpand = React.useCallback((pair) => {
     const newExpanded = new Map(expandedPairs);
     if (newExpanded.has(pair.rank)) {
@@ -662,6 +716,7 @@ const App = () => {
             colorMap={communityColorMap}
             isFiltered={selectedCommunities.length > 0}
             selectedCommunities={selectedCommunities}
+            communityPairCategories={communityPairCategories}
           />
         </div>
 

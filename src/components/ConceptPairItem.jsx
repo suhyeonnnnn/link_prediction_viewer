@@ -7,12 +7,18 @@ const ConceptPairItem = ({
   childRelations,
   colorMap = {},
   isFiltered = false,
-  selectedCommunities = []
+  selectedCommunities = [],
+  communityPairCategories = {}  // { 'community1|||community2': { label, color } }
 }) => {
   const [showAllChildren1, setShowAllChildren1] = useState(false);
   const [showAllChildren2, setShowAllChildren2] = useState(false);
   
   const INITIAL_CHILD_COUNT = 20;
+  
+  // Get matrix category for this concept pair's community pair
+  const pairKey = `${pair.community1}|||${pair.community2}`;
+  const reversePairKey = `${pair.community2}|||${pair.community1}`;
+  const matrixCategory = communityPairCategories[pairKey] || communityPairCategories[reversePairKey];
   
   // Determine if this is a node filter (1 community) or edge filter (2 communities)
   const isNodeFilter = selectedCommunities.length === 1;
@@ -106,9 +112,26 @@ const ConceptPairItem = ({
         </div>
       </div>
       
-      {/* Prediction Score - 항상 표시 */}
-      <div style={{ fontSize: '13px', color: '#555', fontWeight: '600' }}>
-        Score: {pair.prediction_score.toFixed(3)}
+      {/* Prediction Score & Matrix Category */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ fontSize: '13px', color: '#555', fontWeight: '600' }}>
+          Score: {pair.prediction_score.toFixed(3)}
+        </div>
+        {matrixCategory && (
+          <div style={{
+            fontSize: '10px',
+            fontWeight: '600',
+            color: matrixCategory.color,
+            background: `${matrixCategory.color}15`,
+            padding: '2px 6px',
+            borderRadius: '3px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.3px',
+            border: `1px solid ${matrixCategory.color}40`
+          }}>
+            {matrixCategory.label}
+          </div>
+        )}
       </div>
 
       {/* 확장된 상세 정보 */}
