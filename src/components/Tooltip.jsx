@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const Tooltip = ({ text, position = 'top' }) => {
+const Tooltip = ({ text, position = 'top', maxWidth = '320px' }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   const tooltipStyles = {
@@ -12,59 +12,63 @@ const Tooltip = ({ text, position = 'top' }) => {
       marginLeft: '6px'
     },
     icon: {
-      width: '16px',
-      height: '16px',
+      width: '18px',
+      height: '18px',
       borderRadius: '50%',
-      background: '#95a5a6',
-      color: 'white',
+      background: '#cbd5e0',
+      color: '#2c3e50',
       fontSize: '11px',
-      fontWeight: '600',
+      fontWeight: '700',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       cursor: 'help',
-      transition: 'all 0.2s',
-      userSelect: 'none'
+      transition: 'all 0.2s ease',
+      userSelect: 'none',
+      border: '1px solid #a0aec0'
     },
     iconHover: {
-      background: '#7f8c8d'
+      background: '#3498db',
+      color: 'white',
+      borderColor: '#3498db',
+      transform: 'scale(1.1)'
     },
     tooltip: {
       position: 'absolute',
       background: '#2c3e50',
       color: 'white',
-      padding: '10px 14px',
+      padding: '12px 16px',
       borderRadius: '6px',
       fontSize: '13px',
-      lineHeight: '1.5',
+      lineHeight: '1.6',
       whiteSpace: 'normal',
-      width: '320px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      width: maxWidth,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
       zIndex: 1000,
       pointerEvents: 'none',
       opacity: isVisible ? 1 : 0,
       visibility: isVisible ? 'visible' : 'hidden',
-      transition: 'opacity 0.2s, visibility 0.2s',
+      transition: 'opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease',
       ...(position === 'top' ? {
         bottom: '100%',
         left: '50%',
-        transform: 'translateX(-50%)',
-        marginBottom: '8px'
+        transform: isVisible ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(4px)',
+        marginBottom: '10px'
       } : position === 'bottom' ? {
         top: '100%',
         left: '50%',
-        transform: 'translateX(-50%)',
-        marginTop: '8px'
+        transform: isVisible ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(-4px)',
+        marginTop: '10px'
       } : position === 'left' ? {
         right: '100%',
         top: '50%',
-        transform: 'translateY(-50%)',
-        marginRight: '8px'
+        transform: isVisible ? 'translateY(-50%) translateX(0)' : 'translateY(-50%) translateX(4px)',
+        marginRight: '10px'
       } : {
         left: '100%',
         top: '50%',
-        transform: 'translateY(-50%)',
-        marginLeft: '8px'
+        transform: isVisible ? 'translateY(-50%) translateX(0)' : 'translateY(-50%) translateX(-4px)',
+        marginLeft: '10px'
       })
     },
     arrow: {
@@ -76,25 +80,25 @@ const Tooltip = ({ text, position = 'top' }) => {
         top: '100%',
         left: '50%',
         transform: 'translateX(-50%)',
-        borderWidth: '6px 6px 0 6px',
+        borderWidth: '7px 7px 0 7px',
         borderColor: '#2c3e50 transparent transparent transparent'
       } : position === 'bottom' ? {
         bottom: '100%',
         left: '50%',
         transform: 'translateX(-50%)',
-        borderWidth: '0 6px 6px 6px',
+        borderWidth: '0 7px 7px 7px',
         borderColor: 'transparent transparent #2c3e50 transparent'
       } : position === 'left' ? {
         left: '100%',
         top: '50%',
         transform: 'translateY(-50%)',
-        borderWidth: '6px 0 6px 6px',
+        borderWidth: '7px 0 7px 7px',
         borderColor: 'transparent transparent transparent #2c3e50'
       } : {
         right: '100%',
         top: '50%',
         transform: 'translateY(-50%)',
-        borderWidth: '6px 6px 6px 0',
+        borderWidth: '7px 7px 7px 0',
         borderColor: 'transparent #2c3e50 transparent transparent'
       })
     }
@@ -110,7 +114,7 @@ const Tooltip = ({ text, position = 'top' }) => {
         ...tooltipStyles.icon,
         ...(isVisible ? tooltipStyles.iconHover : {})
       }}>
-        ?
+        i
       </div>
       <div style={tooltipStyles.tooltip}>
         {text}
