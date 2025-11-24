@@ -98,8 +98,7 @@ const IntroPage = ({ onEnter }) => {
               maxWidth: '800px',
               animation: 'fadeInUp 0.6s ease-out 0.1s both'
             }}>
-              Interactive visualization platform for analyzing predicted concept relationships 
-              in service research networks through 2027
+              Discover emerging service research priorities and interdisciplinary opportunities predicted to shape the field by 2027
             </p>
           </div>
         </div>
@@ -120,7 +119,7 @@ const IntroPage = ({ onEnter }) => {
               borderBottom: '2px solid #3498db',
               paddingBottom: '6px'
             }}>
-              System Overview
+              What Can You Discover?
             </h2>
             <p style={{ 
               fontSize: '14px', 
@@ -128,10 +127,9 @@ const IntroPage = ({ onEnter }) => {
               lineHeight: '1.6',
               marginBottom: '10px'
             }}>
-              This platform visualizes link prediction results from service research papers, 
-              predicting which concept pairs are likely to be connected by 2027. Using hierarchical 
-              concept extraction and network analysis, the system helps identify emerging research 
-              priorities and interdisciplinary opportunities.
+            Which research topics will converge in service science by 2027? 
+            This platform answers that question by analyzing co-occurrence patterns from leading service research journals.
+            Our link prediction model identifies concept pairs that don't yet appear together—but are likely to emerge as important research themes.
             </p>
             <div style={{ 
               background: '#f8f9fa', 
@@ -141,9 +139,8 @@ const IntroPage = ({ onEnter }) => {
               marginTop: '10px'
             }}>
               <div style={{ fontSize: '13px', color: '#555', lineHeight: '1.6' }}>
-                <strong>Methodology:</strong> Concepts are extracted from research papers and clustered 
-                via K-means to identify thematic communities. Community labels are generated using 
-                large language models for interpretability.
+                <strong>Methodology:</strong> We extract hierarchical concepts from thousands of service research papers, 
+                construct co-occurrence networks, and apply link prediction to forecast future connections.
               </div>
             </div>
           </div>
@@ -190,7 +187,8 @@ const IntroPage = ({ onEnter }) => {
                   lineHeight: '1.5',
                   margin: 0 
                 }}>
-                  Browse ranked concept pairs with prediction scores, frequencies, and hierarchical relationships
+                  Explore concept pairs ranked by prediction confidence. 
+                  Expand each pair to see paper counts, dominant fields, and child concepts for deeper context.
                 </p>
               </div>
 
@@ -217,7 +215,8 @@ const IntroPage = ({ onEnter }) => {
                   lineHeight: '1.5',
                   margin: 0 
                 }}>
-                  Interactive visualization of predicted and current connections between concept communities
+                  Compare predicted (2027) vs. current networks side-by-side. 
+                  Click nodes or edges to filter and discover specific inter-community connections.
                 </p>
               </div>
 
@@ -228,7 +227,7 @@ const IntroPage = ({ onEnter }) => {
                   marginBottom: '8px',
                   color: '#e67e22'
                 }}>
-                  📈
+                  🧭
                 </div>
                 <h3 style={{ 
                   fontSize: '15px', 
@@ -244,7 +243,9 @@ const IntroPage = ({ onEnter }) => {
                   lineHeight: '1.5',
                   margin: 0 
                 }}>
-                  Ranked community pairs with matrix analysis comparing predicted and current connections
+                  Ranked community pairs comparing predicted and current connections.
+                  Identify Consolidating, Accelerating, Stabilizing and Exploring research themes through Matrix Analysis. 
+                  Find where your research area is heading.
                 </p>
               </div>
             </div>

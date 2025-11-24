@@ -41,7 +41,7 @@ const Tooltip = ({ text, position = 'top', maxWidth = '320px' }) => {
       borderRadius: '6px',
       fontSize: '13px',
       lineHeight: '1.6',
-      whiteSpace: 'normal',
+      whiteSpace: 'pre-line',  // ← 여기! 'normal' → 'pre-line'
       width: maxWidth,
       boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
       zIndex: 1000,

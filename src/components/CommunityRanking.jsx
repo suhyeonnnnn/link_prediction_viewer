@@ -88,10 +88,23 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
           <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
             Community Pair Ranking
           </h2>
-          <Tooltip 
-            text="Rankings of community pairs. Use buttons to switch between predicted strength, previous strength, or rising connections. Matrix Analysis categorizes pairs by their change patterns."
-            position="bottom"
-          />
+            <Tooltip 
+              text={`Community pairs ranked by connection strength (# of concept pairs linking them).
+
+            【Displayed Metrics】
+            - Community Pair: Community A × Community B
+            - Rank: Position based on connection strength
+            - Rank Change: Difference compared to the other network (in parentheses)
+            - Pairs Count: Number of concept pairs connecting the two communities
+            - Percentage: Share of total edges in the network
+
+            【Interaction】
+            - Click a pair to filter concept pairs list (same as clicking edge in network)
+            - Use Predicted/Current buttons to switch ranking basis
+
+            Note: Network filters (Top N, Year Range) automatically recalculate rankings.`}
+              position="top"
+            />
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           {/* Matrix Analysis Button */}
@@ -119,10 +132,16 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
             >
               {showMatrix ? 'Hide Matrix' : 'Matrix Analysis'}
             </button>
-            <Tooltip 
-              text="2x2 matrix categorizing community pairs by their predicted vs. current strength. High-High = Consolidating, High-Low = Accelerating, Low-High = Stabilizing, Low-Low = Exploring."
-              position="left"
-            />
+              <Tooltip 
+                text={`2×2 classification of community pairs based on predicted vs. current connection strength (median-split).
+
+              【Categories】
+              - Accelerating: High predicted, Low current → Emerging research frontiers
+              - Stabilizing: Low predicted, High current → Maturing relationships
+              - Consolidating: High in both → Core research pillars
+              - Exploring: Low in both → Potential spaces for novel research`}
+                position="left"
+              />
             </div>
           )}
           {/* Ranking Mode Toggle */}
@@ -155,7 +174,7 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                 if (rankingMode !== 'predicted') e.target.style.background = 'white';
               }}
             >
-              Predicted Strength
+              Predicted Connection
             </button>
             <button
               onClick={() => onRankingModeChange('previous')}
@@ -176,7 +195,7 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
                 if (rankingMode !== 'previous') e.target.style.background = 'white';
               }}
             >
-              Current Strength
+              Current Connection
             </button>
           </div>
           <Tooltip 
