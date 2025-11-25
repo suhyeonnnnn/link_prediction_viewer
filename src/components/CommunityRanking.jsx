@@ -1,8 +1,17 @@
 import React from 'react';
 import Tooltip from './Tooltip';
 
-const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemClick, onReset, rankingMode, onRankingModeChange, onMatrixCategoryClick }) => {
+const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemClick, onReset, rankingMode, onRankingModeChange, onMatrixCategoryClick, onMatrixToggle }) => {
   const [showMatrix, setShowMatrix] = React.useState(false);
+  
+  // Notify parent when matrix is toggled
+  const handleMatrixToggle = () => {
+    const newShowMatrix = !showMatrix;
+    setShowMatrix(newShowMatrix);
+    if (onMatrixToggle) {
+      onMatrixToggle(newShowMatrix);
+    }
+  };
   
   // Calculate median for matrix categorization - use fullRanking instead of ranking
   const getMatrixCategories = () => {
@@ -71,7 +80,13 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
   const matrixData = getMatrixCategories();
   
   return (
-    <>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      gap: '10px',
+      overflow: 'hidden'
+    }}>
       {/* 헤더 - 고정 */}
       <div style={{
         background: 'white',
@@ -82,7 +97,8 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
         justifyContent: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
-        gap: '10px'
+        gap: '10px',
+        flexShrink: 0
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
@@ -111,7 +127,7 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
           {matrixData && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <button
-              onClick={() => setShowMatrix(!showMatrix)}
+              onClick={handleMatrixToggle}
               style={{
                 padding: '6px 14px',
                 border: 'none',
@@ -213,9 +229,9 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
           borderRadius: '8px',
           padding: '15px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          marginTop: '10px',
           maxHeight: '400px',
-          overflowY: 'auto'
+          overflowY: 'auto',
+          flexShrink: 0
         }}>
           <div style={{
             display: 'grid',
@@ -467,12 +483,12 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
       {/* 리스트 - 스크롤 가능 */}
       <div style={{
         flex: 1,
+        minHeight: 0,
         overflowY: 'auto',
         background: 'white',
         borderRadius: '8px',
         padding: '10px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        marginTop: '10px'
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
         {ranking.map(item => {
           const isSelected = selectedCommunities.includes(item.community1) && 
@@ -565,7 +581,7 @@ const CommunityRanking = ({ ranking, fullRanking, selectedCommunities, onItemCli
           );
         })}
       </div>
-    </>
+    </div>
   );
 };
 
